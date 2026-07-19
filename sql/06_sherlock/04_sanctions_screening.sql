@@ -25,7 +25,9 @@ AS t(watchlist_id, watch_name, list_type, list_source, country, reason, severity
 
 -- ── Screening hits ───────────────────────────────────────────────────────
 -- Fuzzy match resolved entities against the watchlist. jaro_winkler is available
--- in Databricks SQL; we normalise case and keep hits above a confidence floor.
+-- in Databricks SQL. NOTE: jaro_winkler is NOT a Databricks SQL built-in, so we
+-- use a normalised Levenshtein similarity (1 - lev/maxlen) nudged by soundex
+-- agreement — both are supported built-ins. Thresholds re-tuned accordingly.
 CREATE OR REPLACE TABLE investec_fraud_aml_gold.sanctions_screening_hits AS
 WITH entities AS (
   SELECT DISTINCT entity_id, source_id, party_type, full_name, country
@@ -35,10 +37,17 @@ scored AS (
   SELECT
     e.entity_id, e.source_id, e.party_type, e.full_name AS entity_name, e.country AS entity_country,
     w.watchlist_id, w.watch_name, w.list_type, w.list_source, w.reason, w.severity,
-    round(jaro_winkler(lower(e.full_name), lower(w.watch_name)), 3) AS match_score,
+    round(1.0 - levenshtein(lower(e.full_name), lower(w.watch_name))
+          / cast(greatest(length(e.full_name), length(w.watch_name)) AS DOUBLE), 3) AS lev_sim,
+    (soundex(e.full_name) = soundex(w.watch_name)) AS soundex_match,
     (lower(e.full_name) = lower(w.watch_name)) AS exact_match
   FROM entities e
   CROSS JOIN investec_fraud_aml_gold.sanctions_watchlist w
+),
+matched AS (
+  SELECT *,
+    least(1.0, round(lev_sim + CASE WHEN soundex_match THEN 0.05 ELSE 0 END, 3)) AS match_score
+  FROM scored
 )
 SELECT
   concat('SCR-', entity_id, '-', watchlist_id) AS screening_id,
@@ -46,7 +55,7 @@ SELECT
   watchlist_id, watch_name, list_type, list_source, reason, severity,
   match_score, exact_match,
   CASE WHEN exact_match THEN 'confirmed'
-       WHEN match_score >= 0.92 THEN 'probable'
+       WHEN match_score >= 0.90 THEN 'probable'
        ELSE 'possible' END AS confidence
-FROM scored
-WHERE match_score >= 0.88;   -- confidence floor; tuneable
+FROM matched
+WHERE exact_match OR match_score >= 0.82;   -- confidence floor; tuneable
