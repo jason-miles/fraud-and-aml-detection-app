@@ -37,3 +37,10 @@ export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
 // Graph
 export const getGraph = (q = "", limit = 12) =>
   apiGet(`${S}/graph?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
+
+// GenAI
+const G = "/api/genai";
+export const genieAsk = (b: any) => apiPost(`${G}/ask`, b);
+export const execBriefing = () => apiGet(`${G}/exec-briefing`);
+export const caseTriage = (b: any) => apiPost(`${G}/triage`, b);
+export const casePrioritize = (b: any) => apiPost(`${G}/prioritize`, b);
