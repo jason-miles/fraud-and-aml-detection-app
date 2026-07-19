@@ -20,7 +20,9 @@ flow (origin, current_acct, path, depth, total) AS (
   FROM flow f
   JOIN edges e ON e.from_acct = f.current_acct
   WHERE f.depth < 5
-    AND NOT array_contains(f.path, e.to_acct)
+    -- Don't revisit intermediate nodes, BUT allow the closing edge back to the
+    -- origin (which is always already in the path as its first element).
+    AND (NOT array_contains(f.path, e.to_acct) OR e.to_acct = f.origin)
 ),
 rings AS (
   SELECT origin, path, depth, total,
