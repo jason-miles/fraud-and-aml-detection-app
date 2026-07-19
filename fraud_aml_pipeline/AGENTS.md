@@ -30,3 +30,15 @@ Silver datasets use fully-qualified names to publish into investec_fraud_aml_sil
 
 Deploy: `databricks bundle deploy -t dev --profile fevm-elexon-app-for-settlement-acc`
 Run:    `databricks bundle run fraud_aml_pipeline_etl -t dev --profile fevm-elexon-app-for-settlement-acc`
+
+## IMPORTANT: use --full-refresh-all when re-running
+
+Silver and gold datasets publish to *different schemas* (investec_fraud_aml_silver /
+_gold) and reference each other by fully-qualified name. Lakeflow does not build a
+dependency edge across fully-qualified refs, so a plain incremental run can execute
+datasets before their upstreams are populated (entity resolution came out empty this
+way). Always run with `--full-refresh-all` so all datasets recompute in one ordered pass:
+
+`databricks bundle run fraud_aml_pipeline_etl --full-refresh-all -t dev --profile fevm-elexon-app-for-settlement-acc`
+
+All 9 alert families are verified to fire against the planted scenarios after a full refresh.
