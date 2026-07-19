@@ -1,0 +1,90 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { getQueue } from "../api";
+import { Sev, Loading, usePersona, num, money } from "../components/ui";
+
+const SCEN_COLORS: Record<string, string> = {
+  "Cash Structuring Detection": "#0b1f3a", "Dormant Account Reactivation": "#12325e",
+  "Rapid Fund Movement": "#2f5fe0", "Related Account Movement": "#eab308",
+  "Round Dollar Pattern": "#7cc4c0", "PEP/Sanctions Alert": "#d92d20",
+  "High-Risk Geography Transfer": "#f79009", "Beneficiary Mismatch": "#9333ea",
+  "Third-Party Deposit Pattern": "#6ea8de",
+};
+
+export function AlertInvestigation() {
+  const nav = useNavigate();
+  const { current } = usePersona();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!current) return;
+    setLoading(true);
+    getQueue(current.analyst_id).then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [current]);
+
+  if (loading || !data) return <Loading what="my queue" />;
+  const k = data.kpis || {};
+
+  // pivot weekly -> stacked by scenario
+  const weeks: Record<string, any> = {};
+  const scenarios = new Set<string>();
+  (data.weekly || []).forEach((r: any) => {
+    const wk = new Date(r.week).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    weeks[wk] = weeks[wk] || { week: `Week of ${wk}` };
+    weeks[wk][r.scenario] = num(r.alerts);
+    scenarios.add(r.scenario);
+  });
+  const weekData = Object.values(weeks);
+
+  return (
+    <>
+      <h1 className="page-title">My Queue — {current?.analyst_name}</h1>
+      <p className="page-sub">{current?.team_name}</p>
+
+      <div className="kpis">
+        <div className="kpi"><div className="label"><span className="dot" style={{ background: "var(--critical)" }} />Critical</div><div className="value navy">{k.critical || 0}</div></div>
+        <div className="kpi"><div className="label"><span className="dot" style={{ background: "var(--medium)" }} />High</div><div className="value navy">{k.high || 0}</div></div>
+        <div className="kpi"><div className="label">Total Alerts</div><div className="value navy">{k.total || 0}</div></div>
+        <div className="kpi"><div className="label">New Alerts</div><div className="value" style={{ color: "var(--royal)" }}>{k.new_alerts || 0}</div></div>
+      </div>
+
+      <div className="panel">
+        <h3 className="left">Daily Alerts by Scenario — {current?.analyst_name}</h3>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={weekData} margin={{ left: 0, right: 20, top: 10, bottom: 10 }}>
+            <XAxis dataKey="week" tick={{ fill: "#6b7794", fontSize: 11 }} />
+            <YAxis tick={{ fill: "#6b7794", fontSize: 10 }} />
+            <Tooltip />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            {[...scenarios].map((s) => (
+              <Bar key={s} dataKey={s} stackId="a" fill={SCEN_COLORS[s] || "#94a3b8"} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="panel">
+        <h3 className="left">Active Alerts</h3>
+        <table>
+          <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Risk Score</th><th>Priority</th><th>Amount</th><th>Days</th><th>Action</th></tr></thead>
+          <tbody>
+            {(data.active_alerts || []).map((a: any) => (
+              <tr key={a.case_id}>
+                <td className="mono">{a.alert_num}</td>
+                <td>{a.customer_name}</td>
+                <td>{a.scenario}</td>
+                <td><a style={{ color: "var(--royal)", fontWeight: 700 }}>{a.risk_score}</a></td>
+                <td><Sev s={a.priority} /></td>
+                <td style={{ fontWeight: 600 }}>{money(a.amount)}</td>
+                <td style={{ color: num(a.days_open) > 90 ? "var(--critical)" : undefined }}>{a.days_open}</td>
+                <td><button className="btn sm" onClick={() => nav(`/investigation/${a.case_id}`)}>Investigate</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}

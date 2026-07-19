@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/components/ui.tsx","./src/pages/alertdetail.tsx","./src/pages/alertqueue.tsx","./src/pages/customer360.tsx","./src/pages/entitynetwork.tsx","./src/pages/reports.tsx","./src/pages/travelmap.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/components/ui.tsx","./src/pages/alertinvestigation.tsx","./src/pages/executiveoverview.tsx","./src/pages/graphexplorer.tsx","./src/pages/investigation.tsx","./src/pages/landing.tsx","./src/pages/sarfiling.tsx"],"version":"5.9.3"}

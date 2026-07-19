@@ -1,48 +1,60 @@
-import { NavLink, Route, Routes } from "react-router-dom";
-import { AlertQueue } from "./pages/AlertQueue";
-import { AlertDetail } from "./pages/AlertDetail";
-import { EntityNetwork } from "./pages/EntityNetwork";
-import { Customer360 } from "./pages/Customer360";
-import { Reports } from "./pages/Reports";
-import { TravelMap } from "./pages/TravelMap";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { PersonaProvider, usePersona } from "./components/ui";
+import { Landing } from "./pages/Landing";
+import { ExecutiveOverview } from "./pages/ExecutiveOverview";
+import { AlertInvestigation } from "./pages/AlertInvestigation";
+import { Investigation } from "./pages/Investigation";
+import { SarFiling } from "./pages/SarFiling";
+import { GraphExplorer } from "./pages/GraphExplorer";
 
-const NAV = [
-  { to: "/", label: "Alert Queue", end: true },
-  { to: "/network", label: "Entity Network" },
-  { to: "/customers", label: "Customer 360" },
-  { to: "/travel", label: "Impossible Travel" },
-  { to: "/reports", label: "Reports" },
-];
+function TopBar() {
+  const { personas, current, setCurrent } = usePersona();
+  return (
+    <div className="topbar">
+      <div className="logo"><span className="mark">🛡</span> SherlockAML</div>
+      <nav className="nav-pills">
+        <NavLink to="/exec" className={({ isActive }) => (isActive ? "active" : "")}>Executive Overview</NavLink>
+        <NavLink to="/investigation" className={({ isActive }) => (isActive ? "active" : "")}>Alert Investigation</NavLink>
+        <NavLink to="/graph" className={({ isActive }) => (isActive ? "active" : "")}>Graph Explorer</NavLink>
+      </nav>
+      <div className="viewas">
+        View As:
+        <select value={current?.analyst_id || ""}
+          onChange={(e) => { const p = personas.find((x) => x.analyst_id === e.target.value); if (p) setCurrent(p); }}>
+          {personas.map((p) => (
+            <option key={p.analyst_id} value={p.analyst_id}>{p.analyst_name} ({p.team_name})</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function Shell() {
+  const loc = useLocation();
+  if (loc.pathname === "/") return <Landing />;
+  return (
+    <>
+      <TopBar />
+      <div className="page">
+        <Routes>
+          <Route path="/exec" element={<ExecutiveOverview />} />
+          <Route path="/investigation" element={<AlertInvestigation />} />
+          <Route path="/investigation/:caseId" element={<Investigation />} />
+          <Route path="/sar/:caseId" element={<SarFiling />} />
+          <Route path="/graph" element={<GraphExplorer />} />
+        </Routes>
+      </div>
+    </>
+  );
+}
 
 export function App() {
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <div className="brand">
-          Investec <span className="bar">|</span> Fraud & AML
-          <span className="sub">Wealth & Banking · Databricks</span>
-        </div>
-        <nav className="nav">
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}
-              className={({ isActive }) => (isActive ? "active" : "")}>
-              {n.label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-      <main className="main">
-        <Routes>
-          <Route path="/" element={<AlertQueue />} />
-          <Route path="/alerts/:alertId" element={<AlertDetail />} />
-          <Route path="/network" element={<EntityNetwork />} />
-          <Route path="/network/:entityId" element={<EntityNetwork />} />
-          <Route path="/customers" element={<Customer360 />} />
-          <Route path="/customers/:customerId" element={<Customer360 />} />
-          <Route path="/travel" element={<TravelMap />} />
-          <Route path="/reports" element={<Reports />} />
-        </Routes>
-      </main>
-    </div>
+    <PersonaProvider>
+      <Routes>
+        <Route path="/*" element={<Shell />} />
+      </Routes>
+    </PersonaProvider>
   );
 }

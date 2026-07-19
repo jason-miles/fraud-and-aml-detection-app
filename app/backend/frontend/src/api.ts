@@ -1,10 +1,9 @@
-// Thin API client for the FastAPI backend.
+// SherlockAML API client.
 export async function apiGet<T = any>(path: string): Promise<T> {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`${path} -> ${res.status}`);
   return res.json();
 }
-
 export async function apiPost<T = any>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
@@ -15,14 +14,26 @@ export async function apiPost<T = any>(path: string, body: unknown): Promise<T> 
   return res.json();
 }
 
-// Alerts
-export const getAlerts = (q = "") => apiGet(`/api/alerts${q}`);
-export const getAlertSummary = () => apiGet(`/api/alerts/summary`);
-export const getAlert = (id: string) => apiGet(`/api/alerts/${encodeURIComponent(id)}`);
-export const postFeedback = (b: any) => apiPost(`/api/alerts/feedback`, b);
-// Network / customers / travel / reports
-export const getNetwork = (eid: string) => apiGet(`/api/network/${encodeURIComponent(eid)}`);
-export const getCustomers = (q = "") => apiGet(`/api/customers${q}`);
-export const getCustomer = (id: string) => apiGet(`/api/customers/${encodeURIComponent(id)}`);
-export const getImpossibleTravel = () => apiGet(`/api/impossible-travel`);
-export const getWeeklyReport = () => apiGet(`/api/reports/weekly`);
+const S = "/api/sherlock";
+// Personas
+export const getPersonas = () => apiGet(`${S}/personas`);
+// Executive
+export const getExecKpis = () => apiGet(`${S}/exec/kpis`);
+export const getDailyNew = () => apiGet(`${S}/exec/daily-new`);
+export const getOutstanding = () => apiGet(`${S}/exec/outstanding`);
+export const getByScenario = () => apiGet(`${S}/exec/by-scenario`);
+export const getPriorityStatus = () => apiGet(`${S}/exec/priority-status`);
+export const getResolutionFlow = () => apiGet(`${S}/exec/resolution-flow`);
+export const getTeamPerformance = () => apiGet(`${S}/exec/team-performance`);
+// Investigation
+export const getQueue = (analystId: string) => apiGet(`${S}/queue/${encodeURIComponent(analystId)}`);
+export const getCase = (caseId: string) => apiGet(`${S}/case/${encodeURIComponent(caseId)}`);
+export const addNote = (b: any) => apiPost(`${S}/case/note`, b);
+export const caseAction = (b: any) => apiPost(`${S}/case/action`, b);
+// Agent + SAR
+export const agentChat = (b: any) => apiPost(`${S}/agent/chat`, b);
+export const sarGenerate = (b: any) => apiPost(`${S}/sar/generate`, b);
+export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
+// Graph
+export const getGraph = (q = "", limit = 12) =>
+  apiGet(`${S}/graph?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
