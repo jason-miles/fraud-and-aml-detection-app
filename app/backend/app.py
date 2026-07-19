@@ -50,10 +50,12 @@ if os.path.exists(FRONTEND_DIR):
         if full_path.startswith("api/"):
             return JSONResponse({"detail": "not found"}, status_code=404)
         # Serve root-level static files (favicon, logos, etc.) that Vite emits to
-        # dist root from public/. Guard against path traversal, then fall through
-        # to index.html for SPA client routes.
-        if full_path and ".." not in full_path:
-            candidate = os.path.join(FRONTEND_DIR, full_path)
-            if os.path.isfile(candidate):
+        # dist root from public/. Resolve the candidate and confirm it stays
+        # INSIDE FRONTEND_DIR before serving — os.path.join discards the base on
+        # an absolute full_path (e.g. '/etc/passwd'), and '..' alone isn't enough.
+        if full_path:
+            root = os.path.realpath(FRONTEND_DIR)
+            candidate = os.path.realpath(os.path.join(root, full_path.lstrip("/")))
+            if (candidate == root or candidate.startswith(root + os.sep)) and os.path.isfile(candidate):
                 return FileResponse(candidate)
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
