@@ -33,8 +33,13 @@ def health():
     return {"status": "ok", "app": "investec-fraud-aml"}
 
 
-# Serve React frontend (built artifacts from frontend/dist)
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend", "dist")
+# Serve React frontend. Built artifacts live in webroot/ (a copy of
+# frontend/dist under a name that `databricks sync` won't special-case, so the
+# built UI ships to the app). Fall back to frontend/dist for local dev.
+_HERE = os.path.dirname(__file__)
+FRONTEND_DIR = os.path.join(_HERE, "webroot")
+if not os.path.exists(FRONTEND_DIR):
+    FRONTEND_DIR = os.path.join(_HERE, "frontend", "dist")
 if os.path.exists(FRONTEND_DIR):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
