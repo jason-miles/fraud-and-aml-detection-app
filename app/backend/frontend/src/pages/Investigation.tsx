@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getCase, addNote, caseAction, agentChat } from "../api";
+import { getCase, addNote, caseAction, agentChat, caseTriage } from "../api";
 import { Sev, Loading, usePersona, money, fmtDate, num } from "../components/ui";
 
 const AGENTS = [
@@ -86,6 +86,7 @@ export function Investigation() {
         </div>
 
         <div>
+          <AiTriage caseId={c.case_id} rulesRisk={c.risk_score} />
           <AgentPanel caseId={c.case_id} />
           <div className="panel">
             <h3 className="left">Decision</h3>
@@ -107,6 +108,27 @@ export function Investigation() {
         </div>
       </div>
     </>
+  );
+}
+
+function AiTriage({ caseId, rulesRisk }: { caseId: string; rulesRisk: any }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try { const r = await caseTriage({ case_id: caseId }); setText(r.triage || ""); } catch { setText("Triage unavailable."); }
+    setBusy(false);
+  }
+  return (
+    <div className="panel" style={{ borderLeft: "3px solid var(--accent)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3 className="left" style={{ margin: 0 }}>✦ AI Risk Triage</h3>
+        <button className="btn sm" onClick={run} disabled={busy}>{busy ? "Scoring…" : "Run AI Triage"}</button>
+      </div>
+      {text
+        ? <div className="explain" style={{ marginTop: 12, whiteSpace: "pre-line" }}>{text}</div>
+        : <p className="muted" style={{ margin: "10px 0 0" }}>Rules-based risk is <strong>{rulesRisk}</strong>. Run AI triage for a model-augmented risk score, recommended action, and rationale.</p>}
+    </div>
   );
 }
 

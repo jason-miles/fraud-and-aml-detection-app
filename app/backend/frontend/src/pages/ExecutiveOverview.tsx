@@ -3,7 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import {
-  getExecKpis, getDailyNew, getOutstanding, getByScenario, getPriorityStatus, getTeamPerformance,
+  getExecKpis, getDailyNew, getOutstanding, getByScenario, getPriorityStatus, getTeamPerformance, execBriefing,
 } from "../api";
 import { Loading, num } from "../components/ui";
 
@@ -61,6 +61,7 @@ function AlertsOverview() {
 
   return (
     <>
+      <AiBriefing />
       <div className="kpis">
         <Kpi label="Transaction Amount $" tone="green" value={`${num(kpis.transaction_amount_m).toLocaleString()}m`} delta={-21.87} prev="208.19m" />
         <Kpi label="Case Volume" tone="green" value={kpis.case_volume} delta={-30.06} prev="163" />
@@ -116,6 +117,26 @@ function AlertsOverview() {
         </div>
       </div>
     </>
+  );
+}
+
+function AiBriefing() {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try { const r = await execBriefing(); setText(r.briefing || ""); } catch { setText("AI briefing unavailable."); }
+    setBusy(false);
+  }
+  return (
+    <div className="panel" style={{ borderLeft: "3px solid var(--accent)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3 className="left" style={{ margin: 0 }}>✦ AI Executive Briefing</h3>
+        <button className="btn sm" onClick={run} disabled={busy}>{busy ? "Generating…" : text ? "Regenerate" : "Generate Briefing"}</button>
+      </div>
+      {text && <div className="explain" style={{ marginTop: 14 }}>{text}</div>}
+      {!text && !busy && <p className="muted" style={{ marginBottom: 0 }}>Generate an AI-authored summary of the AML program's current state, powered by Databricks Foundation Model APIs.</p>}
+    </div>
   );
 }
 

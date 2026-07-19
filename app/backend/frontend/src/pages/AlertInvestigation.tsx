@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { getQueue } from "../api";
+import { getQueue, casePrioritize } from "../api";
 import { Sev, Loading, usePersona, num, money } from "../components/ui";
 
 // Investec tonal palette: slate-navy shades + gold + muted blue-grey.
@@ -71,21 +71,42 @@ export function AlertInvestigation() {
         <table>
           <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Risk Score</th><th>Priority</th><th>Amount</th><th>Days</th><th>Action</th></tr></thead>
           <tbody>
-            {(data.active_alerts || []).map((a: any) => (
-              <tr key={a.case_id}>
-                <td className="mono">{a.alert_num}</td>
-                <td>{a.customer_name}</td>
-                <td>{a.scenario}</td>
-                <td><a style={{ color: "var(--royal)", fontWeight: 700 }}>{a.risk_score}</a></td>
-                <td><Sev s={a.priority} /></td>
-                <td style={{ fontWeight: 600 }}>{money(a.amount)}</td>
-                <td style={{ color: num(a.days_open) > 90 ? "var(--critical)" : undefined }}>{a.days_open}</td>
-                <td><button className="btn sm" onClick={() => nav(`/investigation/${a.case_id}`)}>Investigate</button></td>
-              </tr>
-            ))}
+            {(data.active_alerts || []).map((a: any) => <AlertRow key={a.case_id} a={a} nav={nav} />)}
           </tbody>
         </table>
       </div>
+    </>
+  );
+}
+
+function AlertRow({ a, nav }: { a: any; nav: any }) {
+  const [blurb, setBlurb] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function ai() {
+    setBusy(true);
+    try { const r = await casePrioritize({ case_id: a.case_id }); setBlurb(r.blurb || ""); } catch { setBlurb("AI unavailable."); }
+    setBusy(false);
+  }
+  return (
+    <>
+      <tr>
+        <td className="mono">{a.alert_num}</td>
+        <td>{a.customer_name}</td>
+        <td>{a.scenario}</td>
+        <td><span style={{ color: "var(--navy)", fontWeight: 700 }}>{a.risk_score}</span></td>
+        <td><Sev s={a.priority} /></td>
+        <td style={{ fontWeight: 600 }}>{money(a.amount)}</td>
+        <td style={{ color: num(a.days_open) > 90 ? "var(--critical)" : undefined }}>{a.days_open}</td>
+        <td style={{ display: "flex", gap: 6 }}>
+          <button className="btn sm ghost" onClick={ai} disabled={busy} title="AI: why this matters">✦</button>
+          <button className="btn sm" onClick={() => nav(`/investigation/${a.case_id}`)}>Investigate</button>
+        </td>
+      </tr>
+      {blurb && (
+        <tr><td colSpan={8} style={{ background: "var(--canvas)", borderLeft: "3px solid var(--accent)" }}>
+          <span className="muted" style={{ fontWeight: 700, marginRight: 8 }}>✦ AI</span>{blurb}
+        </td></tr>
+      )}
     </>
   );
 }
