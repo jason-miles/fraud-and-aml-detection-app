@@ -24,7 +24,7 @@ SELECT
   'frequency_change'                                      AS alert_type,
   CASE WHEN abs(s.z) >= 5 THEN 'critical' ELSE 'high' END AS severity,
   em.entity_id                                            AS primary_entity_id,
-  array()                                                 AS related_entity_ids,
+  CAST(array() AS ARRAY<STRING>)                          AS related_entity_ids,
   array(s.account_id)                                     AS account_ids,
   CAST(array() AS ARRAY<STRING>)                          AS transaction_ids,
   current_timestamp()                                     AS triggered_at,

@@ -18,7 +18,7 @@ SELECT
   'rapid_movement'                                        AS alert_type,
   CASE WHEN f.inflow >= 2000000 THEN 'critical' ELSE 'high' END AS severity,
   em.entity_id                                            AS primary_entity_id,
-  array()                                                 AS related_entity_ids,
+  CAST(array() AS ARRAY<STRING>)                          AS related_entity_ids,
   array(f.account_id)                                     AS account_ids,
   f.txn_ids                                               AS transaction_ids,
   f.last_ts                                               AS triggered_at,
