@@ -3,10 +3,14 @@
 -- Bounded to the last 3 days of transfers to keep recursion tractable.
 CREATE OR REFRESH PRIVATE MATERIALIZED VIEW detect_circular_flow AS
 WITH RECURSIVE edges AS (
+  -- Bound the graph to MATERIAL transfers between distinct accounts in the last
+  -- 3 days. Layering rings move material sums; this keeps recursion tractable
+  -- (a full 2.4M-edge recursion is infeasible). min_transfer is a tunable floor.
   SELECT from_acct, to_acct, amount, txn_ts, transaction_id
   FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.transactions
   WHERE from_acct IS NOT NULL AND to_acct IS NOT NULL AND from_acct <> to_acct
     AND txn_ts >= current_timestamp() - INTERVAL 3 DAYS
+    AND amount >= 250000
 ),
 flow (origin, current_acct, path, depth, total) AS (
   SELECT from_acct, to_acct, array(from_acct, to_acct), 1, amount
