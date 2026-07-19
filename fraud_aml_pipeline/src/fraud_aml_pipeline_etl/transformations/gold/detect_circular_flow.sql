@@ -25,8 +25,10 @@ flow (origin, current_acct, path, depth, total) AS (
     AND (NOT array_contains(f.path, e.to_acct) OR e.to_acct = f.origin)
 ),
 rings AS (
+  -- One alert per origin, preferring the SHORTEST closing ring (tightest,
+  -- most legible signal — e.g. the clean 4-account loop).
   SELECT origin, path, depth, total,
-         row_number() OVER (PARTITION BY origin ORDER BY depth DESC) rn
+         row_number() OVER (PARTITION BY origin ORDER BY depth ASC) rn
   FROM flow
   WHERE current_acct = origin AND depth >= 3
 )
