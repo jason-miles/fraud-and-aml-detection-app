@@ -38,6 +38,15 @@ export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
 export const getGraph = (q = "", limit = 12) =>
   apiGet(`${S}/graph?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
 
+// Advanced AML (sanctions screening, pKYC, peer anomaly)
+const A = "/api/aml";
+export const getScreening = (confidence = "", limit = 200) =>
+  apiGet(`${A}/screening?limit=${limit}${confidence ? `&confidence=${confidence}` : ""}`);
+export const getScreeningSummary = () => apiGet(`${A}/screening/summary`);
+export const getPkyc = (minRisk = 0, limit = 100) => apiGet(`${A}/pkyc?min_risk=${minRisk}&limit=${limit}`);
+export const getPkycSummary = () => apiGet(`${A}/pkyc/summary`);
+export const getAnomalies = (limit = 100) => apiGet(`${A}/anomalies?limit=${limit}`);
+
 // GenAI
 const G = "/api/genai";
 export const genieAsk = (b: any) => apiPost(`${G}/ask`, b);
