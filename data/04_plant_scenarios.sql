@@ -45,9 +45,13 @@ INSERT INTO investec_fraud_aml_bronze.accounts VALUES
   ('ACCATO01','CUSTFRAUD04','current','ZAR', TIMESTAMP'2021-09-02 09:00:00','active', cast(date_sub(current_date(),2) AS TIMESTAMP), 4100000.00,'crm', current_timestamp());
 
 -- Adverse-media / UBO third party (matches adverse_media corpus) ----------
+-- NOTE: TPFRAUD01/02 deliberately SHARE the national_id + tax_number of
+-- CUSTFRAUD01 (Marco Silva) and CUSTFRAUD02 (Priya Patel) respectively, so
+-- silver entity resolution collapses each customer+third-party pair into one
+-- entity_id — proving the PRD's "same beneficial owner" ontology point.
 INSERT INTO investec_fraud_aml_bronze.third_parties VALUES
-  ('TPFRAUD01','Onyx Capital','company','ID7100000001','TAX710000001','9 Offshore Rd','Mauritius','Mauritius', TIMESTAMP'2017-01-01 09:00:00','register', current_timestamp()),
-  ('TPFRAUD02','Vanguard Nominees','company','ID7100000002','TAX710000002','10 Nominee Rd','Dubai','UAE', TIMESTAMP'2016-05-01 09:00:00','register', current_timestamp()),
+  ('TPFRAUD01','Onyx Capital','company','ID7000000001','TAX700000001','9 Offshore Rd','Mauritius','Mauritius', TIMESTAMP'2017-01-01 09:00:00','register', current_timestamp()),
+  ('TPFRAUD02','Vanguard Nominees','company','ID7000000002','TAX700000002','10 Nominee Rd','Dubai','UAE', TIMESTAMP'2016-05-01 09:00:00','register', current_timestamp()),
   ('TPFRAUD03','Summit Trust','trust','ID7100000003','TAX710000003','11 Trust Ln','London','United Kingdom', TIMESTAMP'2015-03-01 09:00:00','register', current_timestamp());
 
 -- ── A. RAPID MOVEMENT OF FUNDS (passthrough within 24h) ──────────────────
