@@ -7,3 +7,5 @@ node_modules/
 dist/
 build/
 *.log
+.venv_old_314/
+app/backend/.venv/

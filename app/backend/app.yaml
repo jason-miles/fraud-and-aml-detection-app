@@ -1,0 +1,17 @@
+command:
+  - "uvicorn"
+  - "app:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+env:
+  - name: FRAUD_CATALOG
+    value: "elexon_app_for_settlement_acc_catalog"
+  - name: FRAUD_GOLD_SCHEMA
+    value: "investec_fraud_aml_gold"
+  - name: FRAUD_SILVER_SCHEMA
+    value: "investec_fraud_aml_silver"
+  - name: FRAUD_WAREHOUSE_ID
+    value: "d0305022e6c3db8e"
