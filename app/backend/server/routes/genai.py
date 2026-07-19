@@ -19,8 +19,13 @@ GENIE_SPACE = os.environ.get("SENTINEL_GENIE_SPACE", "01f183691e8f14f18ae80b78b6
 
 
 def _aiq(prompt: str) -> str:
-    safe = prompt.replace("'", "''")
-    rows = fetch_all(f"SELECT ai_query('{LLM}', '{safe}') AS a")
+    # Bind the prompt as a parameter — never string-interpolate untrusted/DB text
+    # into the SQL literal (Spark treats backslash as an escape char, so doubling
+    # quotes alone is insufficient and injection-prone).
+    rows = fetch_all(
+        "SELECT ai_query(:model, :prompt) AS a",
+        [{"name": "model", "value": LLM}, {"name": "prompt", "value": prompt}],
+    )
     return rows[0]["a"] if rows else ""
 
 

@@ -201,9 +201,11 @@ FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid
                        f"priority {c['priority']}, risk score {c['risk_score']}, amount {c['amount']}, "
                        f"{c['days_open']} days open.")
     prompt = f"{persona}{context} Question: {q.question}. Answer in 3-4 sentences with a clear recommendation."
-    # ai_query via SQL; escape single quotes in the prompt.
-    safe = prompt.replace("'", "''")
-    rows = fetch_all(f"SELECT ai_query('{LLM}', '{safe}') AS answer")
+    # Bind the prompt as a parameter (never interpolate untrusted text into SQL).
+    rows = fetch_all(
+        "SELECT ai_query(:model, :prompt) AS answer",
+        [{"name": "model", "value": LLM}, {"name": "prompt", "value": prompt}],
+    )
     return {"agent": q.agent, "answer": rows[0]["answer"] if rows else ""}
 
 
@@ -228,8 +230,11 @@ FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid
         f"Days under investigation: {c['days_open']}. Investigating team: {c['team_name']}. "
         "Include: (1) summary of suspicious activity, (2) the pattern detected, "
         "(3) why it is suspicious, (4) recommended action. Keep it factual and professional."
-    ).replace("'", "''")
-    out = fetch_all(f"SELECT ai_query('{LLM}', '{prompt}') AS narrative")
+    )
+    out = fetch_all(
+        "SELECT ai_query(:model, :prompt) AS narrative",
+        [{"name": "model", "value": LLM}, {"name": "prompt", "value": prompt}],
+    )
     return {
         "case_id": c["case_id"],
         "customer_name": c["customer_name"],
