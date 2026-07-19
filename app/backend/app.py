@@ -9,9 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from server.routes import alerts, network, customers, travel
+from server.routes import alerts, network, customers, travel, sherlock
 
-app = FastAPI(title="Investec Fraud & AML", version="0.1.0")
+app = FastAPI(title="SherlockAML — Investec", version="0.2.0")
 
 # CORS for local dev (Vite :5173 -> FastAPI :8000). Harmless in the app.
 app.add_middleware(
@@ -26,6 +26,7 @@ app.include_router(alerts.router)
 app.include_router(network.router)
 app.include_router(customers.router)
 app.include_router(travel.router)
+app.include_router(sherlock.router)
 
 
 @app.get("/api/health")
