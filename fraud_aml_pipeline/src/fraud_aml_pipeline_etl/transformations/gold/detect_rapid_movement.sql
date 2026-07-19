@@ -6,6 +6,9 @@ flows AS (
   SELECT a.account_id, a.customer_id,
          SUM(CASE WHEN t.direction='credit' THEN t.amount END) AS inflow,
          SUM(CASE WHEN t.direction='debit'  THEN t.amount END) AS outflow,
+         -- earliest credit and latest debit, to confirm passthrough ordering
+         MIN(CASE WHEN t.direction='credit' THEN t.txn_ts END) AS first_credit_ts,
+         MAX(CASE WHEN t.direction='debit'  THEN t.txn_ts END) AS last_debit_ts,
          max(t.txn_ts) AS last_ts,
          collect_set(t.transaction_id) AS txn_ids
   FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.transactions t
@@ -33,4 +36,7 @@ CROSS JOIN cfg
 LEFT JOIN elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.entity_map em
   ON em.source_id = f.customer_id AND em.party_type = 'customer'
 WHERE f.inflow >= cfg.rapid_min_amount
-  AND f.outflow >= f.inflow * cfg.passthrough_ratio;
+  AND f.outflow >= f.inflow * cfg.passthrough_ratio
+  -- true layering signature: money must arrive before it leaves
+  AND f.first_credit_ts IS NOT NULL AND f.last_debit_ts IS NOT NULL
+  AND f.first_credit_ts <= f.last_debit_ts;

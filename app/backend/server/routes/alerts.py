@@ -10,28 +10,46 @@ from ..config import GOLD_SCHEMA
 router = APIRouter(prefix="/api", tags=["alerts"])
 
 
+# fraud_alerts is a pipeline MV the app cannot UPDATE, so effective triage status
+# is the latest analyst feedback (if any) folded over the MV's default 'new'.
+# This subquery is reused by the queue and detail endpoints.
+_EFFECTIVE_STATUS_CTE = f"""
+WITH latest_fb AS (
+  SELECT alert_id, status, analyst_feedback, analyst, created_at FROM (
+    SELECT alert_id, status, analyst_feedback, analyst, created_at,
+           row_number() OVER (PARTITION BY alert_id ORDER BY created_at DESC) rn
+    FROM {GOLD_SCHEMA}.alert_feedback
+  ) WHERE rn = 1
+)
+"""
+
+
 @router.get("/alerts")
 def list_alerts(alert_type: Optional[str] = None, severity: Optional[str] = None,
                 status: Optional[str] = None, limit: int = 200):
-    """Filterable alert queue (page 1)."""
+    """Filterable alert queue (page 1). Status reflects latest analyst feedback."""
     where = ["1=1"]
     params = []
     if alert_type:
-        where.append("alert_type = :alert_type")
+        where.append("fa.alert_type = :alert_type")
         params.append({"name": "alert_type", "value": alert_type})
     if severity:
-        where.append("severity = :severity")
+        where.append("fa.severity = :severity")
         params.append({"name": "severity", "value": severity})
     if status:
-        where.append("status = :status")
+        # Filter on effective status (feedback status if present, else MV default).
+        where.append("coalesce(fb.status, fa.status) = :status")
         params.append({"name": "status", "value": status})
     sql = f"""
-SELECT alert_id, alert_type, severity, primary_entity_id, account_ids,
-       triggered_at, score, explanation, status
-FROM {GOLD_SCHEMA}.fraud_alerts
+{_EFFECTIVE_STATUS_CTE}
+SELECT fa.alert_id, fa.alert_type, fa.severity, fa.primary_entity_id, fa.account_ids,
+       fa.triggered_at, fa.score, fa.explanation,
+       coalesce(fb.status, fa.status) AS status
+FROM {GOLD_SCHEMA}.fraud_alerts fa
+LEFT JOIN latest_fb fb ON fb.alert_id = fa.alert_id
 WHERE {' AND '.join(where)}
-ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1
-                       WHEN 'medium' THEN 2 ELSE 3 END, triggered_at DESC
+ORDER BY CASE fa.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1
+                          WHEN 'medium' THEN 2 ELSE 3 END, fa.triggered_at DESC
 LIMIT {int(limit)}
 """
     return fetch_all(sql, params or None)
@@ -58,10 +76,13 @@ FROM {GOLD_SCHEMA}.fraud_alerts
 def alert_detail(alert_id: str):
     """Full alert detail incl. evidence map + entity + latest feedback (page 2)."""
     rows = fetch_all(f"""
-SELECT alert_id, alert_type, severity, primary_entity_id, related_entity_ids,
-       account_ids, transaction_ids, triggered_at, score, explanation, evidence, status
-FROM {GOLD_SCHEMA}.fraud_alerts
-WHERE alert_id = :alert_id
+{_EFFECTIVE_STATUS_CTE}
+SELECT fa.alert_id, fa.alert_type, fa.severity, fa.primary_entity_id, fa.related_entity_ids,
+       fa.account_ids, fa.transaction_ids, fa.triggered_at, fa.score, fa.explanation,
+       fa.evidence, coalesce(fb.status, fa.status) AS status
+FROM {GOLD_SCHEMA}.fraud_alerts fa
+LEFT JOIN latest_fb fb ON fb.alert_id = fa.alert_id
+WHERE fa.alert_id = :alert_id
 """, [{"name": "alert_id", "value": alert_id}])
     if not rows:
         return {"detail": "not found"}

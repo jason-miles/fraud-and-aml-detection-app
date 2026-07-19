@@ -7,7 +7,7 @@ anomalies AS (
   FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.auth_events ae
   WHERE ae.new_device OR ae.new_geo OR ae.credential_change
 ),
-drains AS (
+drains_raw AS (
   SELECT an.account_id, an.event_ts, an.geo_city,
          t.transaction_id, t.amount, t.txn_ts
   FROM anomalies an
@@ -17,6 +17,14 @@ drains AS (
    AND t.direction = 'debit'
   CROSS JOIN cfg
   WHERE t.amount >= cfg.ato_amount
+),
+-- One alert per account: keep the single largest post-anomaly drain so
+-- alert_id ('ALRT-ATO-<acct>') is unique in fraud_alerts.
+drains AS (
+  SELECT * EXCEPT (rn) FROM (
+    SELECT *, row_number() OVER (PARTITION BY account_id ORDER BY amount DESC, txn_ts DESC) rn
+    FROM drains_raw
+  ) WHERE rn = 1
 )
 SELECT
   concat('ALRT-ATO-', d.account_id)                       AS alert_id,

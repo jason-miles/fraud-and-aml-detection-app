@@ -14,7 +14,13 @@ WITH parties_raw AS (
 ),
 keyed AS (
   SELECT *,
-    coalesce(nullif(national_id, ''), nullif(tax_number, '')) AS det_key,
+    -- Prefix each identifier so national_id and tax_number live in DISTINCT
+    -- namespaces — otherwise a party with national_id='X' would wrongly merge
+    -- with a different party whose tax_number='X'.
+    coalesce(
+      CASE WHEN nullif(national_id, '') IS NOT NULL THEN concat('NID:', national_id) END,
+      CASE WHEN nullif(tax_number, '')  IS NOT NULL THEN concat('TAX:', tax_number)  END
+    ) AS det_key,
     concat(soundex(coalesce(full_name, '')), '|', upper(coalesce(city, ''))) AS fuzzy_key
   FROM parties_raw
 ),

@@ -29,11 +29,13 @@ LIMIT 200
         ent_ids = [n for n in node_ids if str(n).startswith("ENT")]
         labels = {}
         if ent_ids:
-            in_list = ",".join(f"'{i}'" for i in ent_ids)
+            # Parameterize the IN list (:e0, :e1, …) — never interpolate ids.
+            placeholders = ", ".join(f":e{i}" for i in range(len(ent_ids)))
+            params = [{"name": f"e{i}", "value": v} for i, v in enumerate(ent_ids)]
             for r in fetch_all(f"""
 SELECT entity_id, max(full_name) AS full_name, max(party_type) AS party_type
-FROM {SILVER_SCHEMA}.entities WHERE entity_id IN ({in_list}) GROUP BY entity_id
-"""):
+FROM {SILVER_SCHEMA}.entities WHERE entity_id IN ({placeholders}) GROUP BY entity_id
+""", params):
                 labels[r["entity_id"]] = r
         for n in node_ids:
             meta = labels.get(n, {})

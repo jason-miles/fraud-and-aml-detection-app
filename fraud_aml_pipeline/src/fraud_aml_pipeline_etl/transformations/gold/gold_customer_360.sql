@@ -15,10 +15,12 @@ latest_risk AS (
   ) WHERE rn = 1
 ),
 alert_counts AS (
+  -- "recent" = last 30 days (the column/tile is labelled Recent alerts).
   SELECT em.source_id AS customer_id, count(*) AS recent_alerts
   FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_gold.fraud_alerts fa
   JOIN elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.entity_map em
     ON em.entity_id = fa.primary_entity_id AND em.party_type = 'customer'
+  WHERE fa.triggered_at >= current_timestamp() - INTERVAL 30 DAYS
   GROUP BY em.source_id
 )
 SELECT
