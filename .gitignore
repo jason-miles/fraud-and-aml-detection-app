@@ -9,3 +9,5 @@ build/
 *.log
 .venv_old_314/
 app/backend/.venv/
+app/backend/frontend/node_modules/
+app/backend/frontend/dist/
