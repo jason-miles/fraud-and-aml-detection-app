@@ -4,12 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { getQueue } from "../api";
 import { Sev, Loading, usePersona, num, money } from "../components/ui";
 
+// Investec tonal palette: slate-navy shades + gold + muted blue-grey.
 const SCEN_COLORS: Record<string, string> = {
-  "Cash Structuring Detection": "#0b1f3a", "Dormant Account Reactivation": "#12325e",
-  "Rapid Fund Movement": "#2f5fe0", "Related Account Movement": "#eab308",
-  "Round Dollar Pattern": "#7cc4c0", "PEP/Sanctions Alert": "#d92d20",
-  "High-Risk Geography Transfer": "#f79009", "Beneficiary Mismatch": "#9333ea",
-  "Third-Party Deposit Pattern": "#6ea8de",
+  "Cash Structuring Detection": "#30384a", "Dormant Account Reactivation": "#4a5468",
+  "Rapid Fund Movement": "#6a7183", "Related Account Movement": "#c9a24b",
+  "Round Dollar Pattern": "#8aa0b6", "PEP/Sanctions Alert": "#b42318",
+  "High-Risk Geography Transfer": "#b54708", "Beneficiary Mismatch": "#8a6d3b",
+  "Third-Party Deposit Pattern": "#aeb6c4",
 };
 
 export function AlertInvestigation() {

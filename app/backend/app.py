@@ -48,4 +48,11 @@ if os.path.exists(FRONTEND_DIR):
     async def serve_spa(full_path: str):
         if full_path.startswith("api/"):
             return JSONResponse({"detail": "not found"}, status_code=404)
+        # Serve root-level static files (favicon, logos, etc.) that Vite emits to
+        # dist root from public/. Guard against path traversal, then fall through
+        # to index.html for SPA client routes.
+        if full_path and ".." not in full_path:
+            candidate = os.path.join(FRONTEND_DIR, full_path)
+            if os.path.isfile(candidate):
+                return FileResponse(candidate)
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))

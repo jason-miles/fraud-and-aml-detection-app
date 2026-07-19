@@ -7,7 +7,8 @@ import {
 } from "../api";
 import { Loading, num } from "../components/ui";
 
-const TEAL = "#7cc4c0";
+const TEAL = "#30384a";   // Investec slate-navy for primary series
+const GOLD = "#c9a24b";
 
 export function ExecutiveOverview() {
   const [tab, setTab] = useState<"alerts" | "team">("alerts");
@@ -161,7 +162,7 @@ function TeamPerformance() {
             <XAxis dataKey="team" tick={{ fill: "#6b7794", fontSize: 10 }} angle={-12} textAnchor="end" height={50} />
             <YAxis tick={{ fill: "#6b7794", fontSize: 10 }} />
             <Tooltip />
-            <Bar dataKey="hours" radius={[6, 6, 0, 0]}>{data.map((_, i) => <Cell key={i} fill="#2f5fe0" />)}</Bar>
+            <Bar dataKey="hours" radius={[2, 2, 0, 0]}>{data.map((_, i) => <Cell key={i} fill={GOLD} />)}</Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { PersonaProvider, usePersona } from "./components/ui";
+import { BrandMark } from "./components/Logo";
 import { Landing } from "./pages/Landing";
 import { ExecutiveOverview } from "./pages/ExecutiveOverview";
 import { AlertInvestigation } from "./pages/AlertInvestigation";
@@ -11,7 +12,7 @@ function TopBar() {
   const { personas, current, setCurrent } = usePersona();
   return (
     <div className="topbar">
-      <div className="logo"><span className="mark">🛡</span> SherlockAML</div>
+      <BrandMark />
       <nav className="nav-pills">
         <NavLink to="/exec" className={({ isActive }) => (isActive ? "active" : "")}>Executive Overview</NavLink>
         <NavLink to="/investigation" className={({ isActive }) => (isActive ? "active" : "")}>Alert Investigation</NavLink>

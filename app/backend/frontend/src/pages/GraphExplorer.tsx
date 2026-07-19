@@ -10,8 +10,8 @@ const CHIPS = [
   "counterparties in high risk jurisdictions",
 ];
 const KIND_COLOR: Record<string, string> = {
-  customer: "#17408b", alert: "#d92d20", account: "#6ea8de",
-  counterparty: "#d1a43a", watchlist: "#7a1f1f", other: "#94a3b8",
+  customer: "#30384a", alert: "#b42318", account: "#8aa0b6",
+  counterparty: "#c9a24b", watchlist: "#7a1f1f", other: "#aeb6c4",
 };
 
 // Deterministic force-directed layout (fixed iterations, no RNG).

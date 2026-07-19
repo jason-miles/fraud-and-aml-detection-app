@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { HeroLogo } from "../components/Logo";
 
 export function Landing() {
   const nav = useNavigate();
   return (
     <div className="landing">
-      <div className="brand"><span className="mark">🛡</span> Sherlock AML</div>
-      <div className="tag">Next-Generation Financial Crime Intelligence Platform</div>
+      <HeroLogo />
 
       <div className="stat-band">
         <div className="s"><div className="n">90%</div><div className="l">Faster Investigations</div></div>
