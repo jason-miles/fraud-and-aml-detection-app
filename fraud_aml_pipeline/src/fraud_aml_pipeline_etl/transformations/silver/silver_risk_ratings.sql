@@ -1,0 +1,3 @@
+-- Silver passthrough: risk_ratings
+CREATE OR REFRESH MATERIALIZED VIEW elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.risk_ratings AS
+SELECT * FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_bronze.risk_ratings;

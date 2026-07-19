@@ -1,0 +1,3 @@
+-- Silver passthrough: auth_events
+CREATE OR REFRESH MATERIALIZED VIEW elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.auth_events AS
+SELECT * FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_bronze.auth_events;

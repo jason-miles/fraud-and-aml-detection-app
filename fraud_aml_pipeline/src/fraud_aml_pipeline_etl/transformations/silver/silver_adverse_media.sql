@@ -1,0 +1,3 @@
+-- Silver passthrough: adverse_media
+CREATE OR REFRESH MATERIALIZED VIEW elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.adverse_media AS
+SELECT * FROM elexon_app_for_settlement_acc_catalog.investec_fraud_aml_bronze.adverse_media;
