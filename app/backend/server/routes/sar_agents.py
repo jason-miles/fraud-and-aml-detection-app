@@ -208,6 +208,9 @@ def orchestrate(req: OrchestrateReq):
             "screening": ev["screening"], "pkyc": ev["pkyc"],
             "adverse_media": ev.get("adverse_media", []),
         },
+        # brief is the exact shared context handed to the agents; returned so callers
+        # (e.g. the eval harness) can reuse it without re-gathering evidence.
+        "evidence_brief": brief,
         "agent_trace": trace,
         "narrative": supervisor,
     }
@@ -261,7 +264,8 @@ def goaml_from_evidence(ev: dict, narrative: str = "") -> str:
     xml += _x("submission_code", "E")           # E = electronic
     xml += _x("report_code", "STR")             # STR = suspicious transaction report
     xml += _x("entity_reference", c["case_id"])
-    xml += _x("submission_date", str(c.get("days_open")) and "")  # stamped at submit time
+    # submission_date is stamped by the FIC submission connector at filing time, not
+    # in the draft — intentionally omitted here.
     xml += "  <reporting_person>\n"
     xml += _x("first_name", c.get("analyst_name"), 4)
     xml += _x("entity", RE["name"], 4)

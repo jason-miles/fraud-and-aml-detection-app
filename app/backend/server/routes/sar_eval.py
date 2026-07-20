@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from ..db import fetch_all, execute
 from ..config import GOLD_SCHEMA
-from .sar_agents import gather_evidence, _evidence_brief, orchestrate, OrchestrateReq
+from .sar_agents import orchestrate, OrchestrateReq
 
 router = APIRouter(prefix="/api/aml", tags=["sar-eval"])
 
@@ -65,8 +65,9 @@ def run_eval(req: EvalReq):
     if not result or "narrative" not in result:
         return {"detail": "not found"}
     narrative = result.get("narrative", "")
-    ev = gather_evidence(req.case_id)
-    brief = _evidence_brief(ev) if ev else ""
+    # Reuse the brief orchestrate already built — avoids a second evidence gather
+    # (extra vector-search + SQL reads).
+    brief = result.get("evidence_brief", "")
 
     groundedness = _judge(
         "You are an AML SAR quality judge. On a 0..1 scale, how well is the SAR "
