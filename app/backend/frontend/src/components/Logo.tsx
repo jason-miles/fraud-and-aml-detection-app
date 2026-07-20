@@ -23,7 +23,7 @@ export function HeroLogo() {
     <div className="hero-logo">
       <div className="hero-glow" />
       <div className="hero-inner">
-        <Crosshair size={54} color="#c9a24b" />
+        <Crosshair size={42} color="#c9a24b" />
         <div className="hero-wordmark">
           <span className="hero-investec">Investec</span>
           <span className="hero-divider" />
