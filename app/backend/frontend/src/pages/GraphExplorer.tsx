@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import cytoscape from "cytoscape";
 import { getGraph } from "../api";
 import { Loading, num } from "../components/ui";
 
@@ -14,53 +15,13 @@ const KIND_COLOR: Record<string, string> = {
   counterparty: "#c9a24b", watchlist: "#7a1f1f", other: "#aeb6c4",
 };
 
-// Deterministic force-directed layout (fixed iterations, no RNG).
-function layout(nodes: any[], edges: any[], W: number, H: number) {
-  const pos: Record<string, { x: number; y: number; vx: number; vy: number }> = {};
-  const N = nodes.length || 1;
-  nodes.forEach((n, i) => {
-    const ang = (2 * Math.PI * i) / N;
-    const r = Math.min(W, H) * 0.36 * (0.5 + ((i * 37) % 100) / 200);
-    pos[n.id] = { x: W / 2 + r * Math.cos(ang), y: H / 2 + r * Math.sin(ang), vx: 0, vy: 0 };
-  });
-  const adj = edges.map((e) => [e.source, e.target]);
-  for (let it = 0; it < 120; it++) {
-    // repulsion
-    for (let a = 0; a < nodes.length; a++) {
-      for (let b = a + 1; b < nodes.length; b++) {
-        const p = pos[nodes[a].id], q = pos[nodes[b].id];
-        let dx = p.x - q.x, dy = p.y - q.y;
-        let d2 = dx * dx + dy * dy || 1;
-        const f = 900 / d2;
-        const d = Math.sqrt(d2);
-        p.vx += (dx / d) * f; p.vy += (dy / d) * f;
-        q.vx -= (dx / d) * f; q.vy -= (dy / d) * f;
-      }
-    }
-    // spring
-    for (const [s, t] of adj) {
-      const p = pos[s], q = pos[t];
-      if (!p || !q) continue;
-      const dx = q.x - p.x, dy = q.y - p.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const f = (d - 70) * 0.02;
-      p.vx += (dx / d) * f; p.vy += (dy / d) * f;
-      q.vx -= (dx / d) * f; q.vy -= (dy / d) * f;
-    }
-    for (const n of nodes) {
-      const p = pos[n.id];
-      p.x += Math.max(-8, Math.min(8, p.vx)); p.y += Math.max(-8, Math.min(8, p.vy));
-      p.vx *= 0.85; p.vy *= 0.85;
-      p.x = Math.max(20, Math.min(W - 20, p.x)); p.y = Math.max(20, Math.min(H - 20, p.y));
-    }
-  }
-  return pos;
-}
-
 export function GraphExplorer() {
   const [q, setQ] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<any>(null);
+  const elRef = useRef<HTMLDivElement>(null);
+  const cyRef = useRef<cytoscape.Core | null>(null);
 
   const run = (query = "") => {
     setLoading(true);
@@ -68,8 +29,47 @@ export function GraphExplorer() {
   };
   useEffect(() => { run(); }, []);
 
-  const W = 900, H = 560;
-  const pos = useMemo(() => (data ? layout(data.nodes, data.edges, W, H) : {}), [data]);
+  // (Re)build the Cytoscape graph whenever data changes.
+  useEffect(() => {
+    if (!data || !elRef.current) return;
+    cyRef.current?.destroy();
+    const cy = cytoscape({
+      container: elRef.current,
+      elements: [
+        ...data.nodes.map((n: any) => ({
+          data: { id: n.id, label: n.kind === "customer" ? n.label : "", kind: n.kind },
+        })),
+        ...data.edges
+          .filter((e: any) => data.nodes.some((n: any) => n.id === e.source) && data.nodes.some((n: any) => n.id === e.target))
+          .map((e: any, i: number) => ({ data: { id: `e${i}`, source: e.source, target: e.target } })),
+      ],
+      style: [
+        {
+          selector: "node",
+          style: {
+            "background-color": (n: any) => KIND_COLOR[n.data("kind")] || KIND_COLOR.other,
+            width: (n: any) => (n.data("kind") === "customer" ? 26 : 12),
+            height: (n: any) => (n.data("kind") === "customer" ? 26 : 12),
+            label: "data(label)", "font-size": 10, color: "#1f2d4d",
+            "text-valign": "top", "text-margin-y": -4, "min-zoomed-font-size": 7,
+          },
+        },
+        { selector: 'node[kind="customer"]', style: { "border-width": 2, "border-color": "#d1a43a" } },
+        { selector: "edge", style: { width: 1, "line-color": "#dbe1ea", "curve-style": "haystack" } },
+        { selector: "node:selected", style: { "border-width": 3, "border-color": "#b42318" } },
+      ],
+      layout: { name: "cose", animate: false, padding: 20, nodeRepulsion: () => 8000, idealEdgeLength: () => 80 } as any,
+      minZoom: 0.2, maxZoom: 3, wheelSensitivity: 0.2,
+    });
+    cy.on("tap", "node", (evt) => {
+      const n = evt.target;
+      const src = (data.nodes || []).find((x: any) => x.id === n.id());
+      setSelected(src ? { ...src, degree: n.degree(false) } : null);
+    });
+    cy.on("tap", (evt) => { if (evt.target === cy) setSelected(null); });
+    cyRef.current = cy;
+    return () => { cy.destroy(); cyRef.current = null; };
+  }, [data]);
 
   return (
     <>
@@ -87,27 +87,10 @@ export function GraphExplorer() {
         <div className="panel">
           <h3 className="left" style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Knowledge Graph</span>
-            <span className="muted" style={{ fontWeight: 400 }}>{data?.node_count ?? 0} nodes · {data?.edge_count ?? 0} edges</span>
+            <span className="muted" style={{ fontWeight: 400 }}>{data?.node_count ?? 0} nodes · {data?.edge_count ?? 0} edges · drag / scroll to explore</span>
           </h3>
           {loading ? <Loading what="graph" /> : (
-            <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ background: "#fbfcfe", borderRadius: 10 }}>
-              {data.edges.map((e: any, i: number) => {
-                const a = pos[e.source], b = pos[e.target]; if (!a || !b) return null;
-                return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#e3e8f0" strokeWidth={1} />;
-              })}
-              {data.nodes.map((n: any) => {
-                const p = pos[n.id]; if (!p) return null;
-                const isCust = n.kind === "customer";
-                const rad = isCust ? 13 : 6;
-                return (
-                  <g key={n.id}>
-                    <circle cx={p.x} cy={p.y} r={rad} fill={KIND_COLOR[n.kind] || KIND_COLOR.other}
-                      stroke={isCust ? "#d1a43a" : "none"} strokeWidth={isCust ? 2 : 0} />
-                    {isCust && <text x={p.x} y={p.y - 16} fill="#1f2d4d" fontSize={10} textAnchor="middle">{n.label}</text>}
-                  </g>
-                );
-              })}
-            </svg>
+            <div ref={elRef} style={{ width: "100%", height: 560, background: "#fbfcfe", borderRadius: 10 }} />
           )}
           <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", fontSize: 12 }}>
             {Object.entries(KIND_COLOR).filter(([k]) => k !== "other").map(([k, c]) => (
@@ -117,6 +100,14 @@ export function GraphExplorer() {
         </div>
 
         <div>
+          {selected && (
+            <div className="panel" style={{ borderTop: "3px solid var(--accent)" }}>
+              <h3 className="left">Selected Node</h3>
+              <div className="kv"><span className="k">Label</span><span>{selected.label || selected.id}</span></div>
+              <div className="kv"><span className="k">Type</span><span style={{ textTransform: "capitalize" }}>{selected.kind}</span></div>
+              <div className="kv"><span className="k">Connections</span><span>{selected.degree}</span></div>
+            </div>
+          )}
           <div className="panel">
             <h3 className="left">🕐 AI Analysis</h3>
             <p className="muted" style={{ marginTop: 0 }}>{data?.analysis}</p>
