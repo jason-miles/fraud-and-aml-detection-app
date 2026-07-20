@@ -38,6 +38,16 @@ def health():
     return {"status": "ok", "app": "investec-fraud-aml"}
 
 
+@app.get("/api/config")
+def config():
+    """Client config — dashboard embed target etc. (env-driven, account-portable)."""
+    host = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    dash_id = os.environ.get("SENTINEL_DASHBOARD_ID", "")
+    embed = f"{host}/embed/dashboardsv3/{dash_id}" if host and dash_id else ""
+    return {"dashboard_id": dash_id, "dashboard_embed_url": embed,
+            "dashboard_url": f"{host}/sql/dashboardsv3/{dash_id}" if host and dash_id else ""}
+
+
 # Serve React frontend. Built artifacts live in webroot/ (a copy of
 # frontend/dist under a name that `databricks sync` won't special-case, so the
 # built UI ships to the app). Fall back to frontend/dist for local dev.

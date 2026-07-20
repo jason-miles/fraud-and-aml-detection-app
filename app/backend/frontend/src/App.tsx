@@ -9,6 +9,7 @@ import { SarFiling } from "./pages/SarFiling";
 import { GraphExplorer } from "./pages/GraphExplorer";
 import { AskSentinel } from "./pages/AskSentinel";
 import { Compliance } from "./pages/Compliance";
+import { Reports } from "./pages/Reports";
 
 function TopBar() {
   const { personas, current, setCurrent } = usePersona();
@@ -20,6 +21,7 @@ function TopBar() {
         <NavLink to="/investigation" className={({ isActive }) => (isActive ? "active" : "")}>Alert Investigation</NavLink>
         <NavLink to="/compliance" className={({ isActive }) => (isActive ? "active" : "")}>Compliance</NavLink>
         <NavLink to="/graph" className={({ isActive }) => (isActive ? "active" : "")}>Graph Explorer</NavLink>
+        <NavLink to="/reports" className={({ isActive }) => (isActive ? "active" : "")}>Reports</NavLink>
         <NavLink to="/ask" className={({ isActive }) => (isActive ? "active" : "")}>Ask Sentinel</NavLink>
       </nav>
       <div className="viewas">
@@ -50,6 +52,7 @@ function Shell() {
           <Route path="/graph" element={<GraphExplorer />} />
           <Route path="/ask" element={<AskSentinel />} />
           <Route path="/compliance" element={<Compliance />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </div>
     </>

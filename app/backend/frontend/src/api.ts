@@ -15,6 +15,8 @@ export async function apiPost<T = any>(path: string, body: unknown): Promise<T> 
 }
 
 const S = "/api/sherlock";
+// App config (dashboard embed etc.)
+export const getConfig = () => apiGet(`/api/config`);
 // Personas
 export const getPersonas = () => apiGet(`${S}/personas`);
 // Executive

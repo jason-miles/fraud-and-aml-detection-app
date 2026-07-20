@@ -17,3 +17,7 @@ env:
     value: "d0305022e6c3db8e"
   - name: SENTINEL_GENIE_SPACE
     value: "01f183691e8f14f18ae80b78b6ffae8b"
+  - name: SENTINEL_DASHBOARD_ID
+    value: "01f1843c859f1acb97f76971d642826c"
+  - name: DATABRICKS_HOST
+    value: "https://fevm-elexon-app-for-settlement-acc.cloud.databricks.com"
