@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getQueue, casePrioritize } from "../api";
-import { Sev, Loading, usePersona, num, money } from "../components/ui";
+import { Sev, Loading, usePersona, num, money, LiveControls } from "../components/ui";
 
 // Investec tonal palette: slate-navy shades + gold + muted blue-grey.
 const SCEN_COLORS: Record<string, string> = {
@@ -12,20 +12,6 @@ const SCEN_COLORS: Record<string, string> = {
   "High-Risk Geography Transfer": "#b54708", "Beneficiary Mismatch": "#8a6d3b",
   "Third-Party Deposit Pattern": "#aeb6c4",
 };
-
-function sinceLabel(ts: number): string {
-  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
-  if (s < 5) return "just now";
-  if (s < 60) return `${s}s ago`;
-  const m = Math.round(s / 60);
-  return `${m}m ago`;
-}
-
-function LiveDot({ on }: { on: boolean }) {
-  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%",
-    background: on ? "var(--low)" : "var(--muted)", marginRight: 4,
-    boxShadow: on ? "0 0 0 3px color-mix(in srgb, var(--low) 25%, transparent)" : "none" }} />;
-}
 
 const REFRESH_MS = 20000; // near-real-time queue refresh cadence
 
@@ -78,10 +64,7 @@ export function AlertInvestigation() {
     <>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <h1 className="page-title">My Queue — {current?.analyst_name}</h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12 }}>
-          <span className="muted"><LiveDot on={live} /> {live ? "Live" : "Paused"}{updatedAt ? ` · updated ${sinceLabel(updatedAt)}` : ""}</span>
-          <button className="btn sm ghost" onClick={() => setLive((v) => !v)}>{live ? "Pause" : "Resume"}</button>
-        </div>
+        <LiveControls live={live} updatedAt={updatedAt} onToggle={() => setLive((v) => !v)} />
       </div>
       <p className="page-sub">{current?.team_name}</p>
 

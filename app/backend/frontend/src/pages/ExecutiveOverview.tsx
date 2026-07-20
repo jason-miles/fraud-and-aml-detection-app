@@ -5,7 +5,7 @@ import {
 import {
   getExecKpis, getDailyNew, getOutstanding, getByScenario, getPriorityStatus, getTeamPerformance, execBriefing,
 } from "../api";
-import { Loading, num } from "../components/ui";
+import { Loading, num, LiveControls } from "../components/ui";
 
 const TEAL = "#30384a";   // Investec slate-navy for primary series
 const GOLD = "#c9a24b";
@@ -37,6 +37,8 @@ function Kpi({ label, value, tone, delta, prev }: any) {
   );
 }
 
+const EXEC_REFRESH_MS = 20000;
+
 function AlertsOverview() {
   const [kpis, setKpis] = useState<any>(null);
   const [daily, setDaily] = useState<any[]>([]);
@@ -44,8 +46,11 @@ function AlertsOverview() {
   const [scenario, setScenario] = useState<any[]>([]);
   const [ps, setPs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [, setTick] = useState(0);
 
-  useEffect(() => {
+  const refresh = () =>
     Promise.all([getExecKpis(), getDailyNew(), getOutstanding(), getByScenario(), getPriorityStatus()])
       .then(([k, d, o, s, p]) => {
         setKpis(k);
@@ -53,14 +58,28 @@ function AlertsOverview() {
         setOutstanding(o.map((r: any) => ({ due: r.due_date, alerts: num(r.alerts) })));
         setScenario(s.map((r: any) => ({ scenario: r.scenario, alerts: num(r.alerts) })));
         setPs(p);
+        setUpdatedAt(Date.now());
         setLoading(false);
       }).catch(() => setLoading(false));
+
+  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    if (!live) return;
+    const id = setInterval(refresh, EXEC_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [live]);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 10000);
+    return () => clearInterval(id);
   }, []);
 
   if (loading) return <Loading what="executive dashboard" />;
 
   return (
     <>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <LiveControls live={live} updatedAt={updatedAt} onToggle={() => setLive((v) => !v)} />
+      </div>
       <AiBriefing />
       <div className="kpis">
         <Kpi label="Transaction Amount $" tone="green" value={`${num(kpis.transaction_amount_m).toLocaleString()}m`} delta={-21.87} prev="208.19m" />

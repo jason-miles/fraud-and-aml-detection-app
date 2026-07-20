@@ -20,6 +20,27 @@ export function fmtDate(v: any): string {
   catch { return String(v); }
 }
 
+// Live-refresh helpers, shared by the queue + exec overview.
+export function sinceLabel(ts: number): string {
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  return `${Math.round(s / 60)}m ago`;
+}
+export function LiveDot({ on }: { on: boolean }) {
+  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%",
+    background: on ? "var(--low)" : "var(--muted)", marginRight: 4,
+    boxShadow: on ? "0 0 0 3px color-mix(in srgb, var(--low) 25%, transparent)" : "none" }} />;
+}
+export function LiveControls({ live, updatedAt, onToggle }: { live: boolean; updatedAt: number | null; onToggle: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12 }}>
+      <span className="muted"><LiveDot on={live} /> {live ? "Live" : "Paused"}{updatedAt ? ` · updated ${sinceLabel(updatedAt)}` : ""}</span>
+      <button className="btn sm ghost" onClick={onToggle}>{live ? "Pause" : "Resume"}</button>
+    </div>
+  );
+}
+
 // ── Persona ("View As") context ──────────────────────────────────────────
 export type Persona = { analyst_id: string; analyst_name: string; team_id: string; team_name: string };
 type Ctx = { personas: Persona[]; current?: Persona; setCurrent: (p: Persona) => void };
