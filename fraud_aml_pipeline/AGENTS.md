@@ -57,6 +57,19 @@ NOTE: each lane's `landing/<lane>/` folder must exist before `read_files` starts
 (`databricks fs mkdir dbfs:/Volumes/.../landing/<lane>`), and the streaming table
 must be initialized once with `--full-refresh-all` after it is first added.
 
+### Self-driving mode (file-arrival trigger)
+
+`resources/fraud_stream_trigger.job.yml` defines job `fraud_aml_stream_trigger`,
+a file-arrival trigger on the `landing/` root that runs the pipeline INCREMENTALLY
+(full_refresh: false) whenever a file lands — so the demo self-drives (drop a file,
+alert appears in ~2 min) WITHOUT a 24/7 continuous cluster. Verified 2026-07-20: a
+drop auto-triggered a run (no manual `bundle run`) that fired the alert.
+
+GOTCHA: bundle `mode: development` deploys triggers PAUSED. After deploy, unpause:
+`databricks jobs update --json '{"job_id":<id>,"new_settings":{"trigger":{...,"pause_status":"UNPAUSED"}}}'`
+(the trigger also needs an initial baseline scan — the very first drop may not fire;
+the next one does). Latency ~1-2 min (poll interval + the 60s settle/debounce).
+
 Deploy: `databricks bundle deploy -t dev --profile fevm-elexon-app-for-settlement-acc`
 Run:    `databricks bundle run fraud_aml_pipeline_etl -t dev --profile fevm-elexon-app-for-settlement-acc`
 
