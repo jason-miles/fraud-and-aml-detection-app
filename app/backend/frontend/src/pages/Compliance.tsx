@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getAudit } from "../api";
+import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getModelDrift, getAudit } from "../api";
 import { Loading, num, money } from "../components/ui";
 
 function Badge({ s }: { s: string }) {
@@ -73,11 +73,17 @@ function AuditTrail() {
 
 function ModelGovernance() {
   const [m, setM] = useState<any>(null);
+  const [drift, setDrift] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getModelGovernance().then((r) => { setM(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  useEffect(() => {
+    Promise.all([getModelGovernance(), getModelDrift().catch(() => null)])
+      .then(([mg, dr]) => { setM(mg); setDrift(dr); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
   if (loading) return <Loading what="model validation record" />;
   if (!m || m.model_version == null) return <p className="muted">No registered model metrics found. Train &amp; score the SAR model first.</p>;
   const pct = (x: any) => `${(num(x) * 100).toFixed(1)}%`;
+  const driftColor: Record<string, string> = { stable: "var(--navy)", warning: "#b54708", drift: "var(--critical)" };
   return (
     <>
       <div className="kpis">
@@ -107,6 +113,34 @@ function ModelGovernance() {
           </tbody>
         </table>
       </div>
+
+      {drift && (
+        <div className="panel">
+          <h3 className="left">Feature Drift Monitoring — ongoing validation
+            <span className="badge" style={{ marginLeft: 10, background: driftColor[drift.overall_status] || "var(--navy)", color: "#fff" }}>
+              {String(drift.overall_status || "stable").toUpperCase()}
+            </span>
+          </h3>
+          <p className="muted" style={{ margin: "4px 0 14px" }}>
+            Current feature distribution vs the training baseline (standardised mean shift). A
+            <strong> drift</strong> verdict triggers a retrain (scheduled job <span className="mono">fraud_ml_retrain</span>).
+          </p>
+          <table>
+            <thead><tr><th>Feature</th><th>Baseline μ</th><th>Current μ</th><th>Shift (σ)</th><th>Status</th></tr></thead>
+            <tbody>
+              {(drift.features || []).map((f: any, i: number) => (
+                <tr key={i}>
+                  <td className="mono">{f.feature}</td>
+                  <td>{f.baseline_mean}</td>
+                  <td>{f.current_mean}</td>
+                  <td>{f.mean_shift_sigma}</td>
+                  <td><span style={{ color: driftColor[f.drift_status] || "var(--navy)", fontWeight: 700 }}>{f.drift_status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

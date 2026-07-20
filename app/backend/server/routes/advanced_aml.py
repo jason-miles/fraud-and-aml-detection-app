@@ -55,6 +55,23 @@ ORDER BY model_version DESC LIMIT 1
     return rows[0] if rows else {}
 
 
+@router.get("/model-drift")
+def model_drift():
+    """Feature-drift monitoring (ongoing model validation). Per-feature current-vs-
+    baseline mean shift + status, and an overall verdict driving the retrain trigger."""
+    rows = fetch_all(f"""
+SELECT feature, baseline_mean, current_mean, mean_shift_sigma, drift_status, computed_at
+FROM {GOLD_SCHEMA}.ml_drift_metrics
+ORDER BY mean_shift_sigma DESC
+""")
+    status = "stable"
+    if any(r.get("drift_status") == "drift" for r in rows):
+        status = "drift"
+    elif any(r.get("drift_status") == "warning" for r in rows):
+        status = "warning"
+    return {"overall_status": status, "features": rows}
+
+
 # ─────────────────────── Audit Trail ──────────────────────────────────────
 @router.get("/audit")
 def audit_trail(case_id: Optional[str] = None, limit: int = 100):
