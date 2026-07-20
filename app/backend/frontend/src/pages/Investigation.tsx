@@ -17,8 +17,8 @@ export function Investigation() {
   const { current } = usePersona();
   const [c, setC] = useState<any>(null);
   const [note, setNote] = useState("");
-  const load = () => getCase(caseId!).then(setC).catch(() => {});
-  useEffect(() => { load(); }, [caseId]);
+  const load = () => getCase(caseId!, current?.analyst_name).then(setC).catch(() => {});
+  useEffect(() => { load(); }, [caseId, current?.analyst_id]);
   if (!c) return <Loading what="investigation" />;
 
   async function act(action: string) {

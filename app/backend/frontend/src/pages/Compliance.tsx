@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance } from "../api";
+import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getAudit } from "../api";
 import { Loading, num, money } from "../components/ui";
 
 function Badge({ s }: { s: string }) {
@@ -9,21 +9,64 @@ function Badge({ s }: { s: string }) {
 }
 
 export function Compliance() {
-  const [tab, setTab] = useState<"screening" | "pkyc" | "anomaly" | "model">("screening");
+  const [tab, setTab] = useState<"screening" | "pkyc" | "anomaly" | "model" | "audit">("screening");
   return (
     <>
       <h1 className="page-title">Compliance & Risk</h1>
-      <p className="page-sub">Sanctions & watchlist screening · perpetual KYC · behavioural peer-group anomaly detection · model governance.</p>
+      <p className="page-sub">Sanctions & watchlist screening · perpetual KYC · behavioural peer-group anomaly detection · model governance · audit trail.</p>
       <div className="tabs">
         <button className={tab === "screening" ? "active" : ""} onClick={() => setTab("screening")}>Sanctions Screening</button>
         <button className={tab === "pkyc" ? "active" : ""} onClick={() => setTab("pkyc")}>Perpetual KYC</button>
         <button className={tab === "anomaly" ? "active" : ""} onClick={() => setTab("anomaly")}>Peer Anomalies</button>
         <button className={tab === "model" ? "active" : ""} onClick={() => setTab("model")}>Model Governance</button>
+        <button className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}>Audit Trail</button>
       </div>
       {tab === "screening" && <Screening />}
       {tab === "pkyc" && <Pkyc />}
       {tab === "anomaly" && <Anomaly />}
       {tab === "model" && <ModelGovernance />}
+      {tab === "audit" && <AuditTrail />}
+    </>
+  );
+}
+
+function AuditTrail() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { getAudit(150).then((r) => { setRows(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  if (loading) return <Loading what="audit trail" />;
+  const label: Record<string, string> = {
+    case_open: "Case opened", note_add: "Note added", case_action: "Case action",
+    sar_submit: "SAR filed", sar_generate: "SAR drafted",
+  };
+  return (
+    <>
+      <div className="kpis">
+        <div className="kpi"><div className="label">Audit Events</div><div className="value navy">{rows.length}</div></div>
+        <div className="kpi"><div className="label">SAR Filings</div><div className="value red">{rows.filter((r) => r.action === "sar_submit").length}</div></div>
+        <div className="kpi"><div className="label">Case Actions</div><div className="value navy">{rows.filter((r) => r.action === "case_action").length}</div></div>
+        <div className="kpi"><div className="label">Distinct Actors</div><div className="value navy">{new Set(rows.map((r) => r.actor)).size}</div></div>
+      </div>
+      <div className="panel">
+        <h3 className="left">Defensible Audit Trail — every read, decision & SAR action, stamped with acting user + timestamp</h3>
+        {rows.length === 0
+          ? <p className="muted" style={{ margin: "10px 0 0" }}>No audit events yet. Open a case, add a note, or file a SAR to generate an entry.</p>
+          : <table>
+              <thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Case</th><th>Detail</th><th>Source</th></tr></thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i}>
+                    <td className="mono" style={{ whiteSpace: "nowrap" }}>{String(r.event_ts).replace("T", " ").slice(0, 19)}</td>
+                    <td>{r.actor}</td>
+                    <td><span className="badge">{label[r.action] || r.action}</span></td>
+                    <td className="mono">{r.case_id || "—"}</td>
+                    <td className="muted">{r.detail}</td>
+                    <td className="muted">{r.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>}
+      </div>
     </>
   );
 }

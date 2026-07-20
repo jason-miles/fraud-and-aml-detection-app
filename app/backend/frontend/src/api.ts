@@ -27,7 +27,8 @@ export const getResolutionFlow = () => apiGet(`${S}/exec/resolution-flow`);
 export const getTeamPerformance = () => apiGet(`${S}/exec/team-performance`);
 // Investigation
 export const getQueue = (analystId: string) => apiGet(`${S}/queue/${encodeURIComponent(analystId)}`);
-export const getCase = (caseId: string) => apiGet(`${S}/case/${encodeURIComponent(caseId)}`);
+export const getCase = (caseId: string, actor = "") =>
+  apiGet(`${S}/case/${encodeURIComponent(caseId)}${actor ? `?actor=${encodeURIComponent(actor)}` : ""}`);
 export const addNote = (b: any) => apiPost(`${S}/case/note`, b);
 export const caseAction = (b: any) => apiPost(`${S}/case/action`, b);
 // Agent + SAR
@@ -47,6 +48,8 @@ export const getPkyc = (minRisk = 0, limit = 100) => apiGet(`${A}/pkyc?min_risk=
 export const getPkycSummary = () => apiGet(`${A}/pkyc/summary`);
 export const getAnomalies = (limit = 100) => apiGet(`${A}/anomalies?limit=${limit}`);
 export const getModelGovernance = () => apiGet(`${A}/model-governance`);
+export const getAudit = (limit = 100) => apiGet(`${A}/audit?limit=${limit}`);
+export const getAuditSummary = () => apiGet(`${A}/audit/summary`);
 
 // GenAI
 const G = "/api/genai";

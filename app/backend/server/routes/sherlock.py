@@ -13,6 +13,23 @@ router = APIRouter(prefix="/api/sherlock", tags=["sherlock"])
 LLM = "databricks-meta-llama-3-3-70b-instruct"
 
 
+def audit(action: str, actor: str = "system", case_id: str = "", detail: str = "",
+          actor_role: str = "", source: str = "app"):
+    """Append an immutable audit event. Best-effort: auditing must never break the
+    user action, so failures are swallowed (the write is a fire-and-forget INSERT)."""
+    try:
+        execute(f"""
+INSERT INTO {GOLD_SCHEMA}.audit_log
+  (event_id, event_ts, actor, actor_role, action, case_id, detail, source)
+VALUES (:id, current_timestamp(), :actor, :role, :action, :cid, :detail, :src)
+""", [{"name": "id", "value": str(uuid.uuid4())}, {"name": "actor", "value": actor},
+      {"name": "role", "value": actor_role}, {"name": "action", "value": action},
+      {"name": "cid", "value": case_id}, {"name": "detail", "value": detail},
+      {"name": "src", "value": source}])
+    except Exception:
+        pass
+
+
 # ─────────────────────────── Personas ────────────────────────────────────
 @router.get("/personas")
 def personas():
@@ -95,8 +112,9 @@ LIMIT 100
 
 
 @router.get("/case/{case_id}")
-def case_detail(case_id: str):
+def case_detail(case_id: str, actor: str = "Sarah Chen"):
     """Investigation page: case, flagged transactions, entity network, notes, actions."""
+    audit("case_open", actor=actor, case_id=case_id, detail="Opened case investigation", source="investigation")
     p = [{"name": "cid", "value": case_id}]
     rows = fetch_all(f"""
 SELECT c.case_id, c.alert_num, c.customer_id, c.customer_name, c.scenario, c.priority, c.status,
@@ -158,6 +176,7 @@ INSERT INTO {GOLD_SCHEMA}.sherlock_case_notes (note_id, case_id, author, note, n
 VALUES (:id, :cid, :author, :note, 'analyst', current_timestamp())
 """, [{"name": "id", "value": str(uuid.uuid4())}, {"name": "cid", "value": n.case_id},
       {"name": "author", "value": n.author}, {"name": "note", "value": n.note}])
+    audit("note_add", actor=n.author, case_id=n.case_id, detail="Added investigation note", source="investigation")
     return {"ok": True}
 
 
@@ -176,6 +195,8 @@ VALUES (:id, :cid, :action, :reason, :actor, current_timestamp())
 """, [{"name": "id", "value": str(uuid.uuid4())}, {"name": "cid", "value": a.case_id},
       {"name": "action", "value": a.action}, {"name": "reason", "value": a.reason},
       {"name": "actor", "value": a.actor}])
+    audit("case_action", actor=a.actor, case_id=a.case_id,
+          detail=f"{a.action}" + (f": {a.reason}" if a.reason else ""), source="investigation")
     return {"ok": True}
 
 
@@ -274,6 +295,8 @@ VALUES (:id, :cid, :cust, :scen, :narr, :dec, :by, current_timestamp())
       {"name": "cust", "value": s.customer_name}, {"name": "scen", "value": s.scenario},
       {"name": "narr", "value": s.narrative}, {"name": "dec", "value": s.decision},
       {"name": "by", "value": s.filed_by}])
+    audit("sar_submit", actor=s.filed_by, case_id=s.case_id,
+          detail=f"{s.decision} — {s.scenario}", source="sar_filing")
     return {"ok": True, "sar_id": s.case_id}
 
 

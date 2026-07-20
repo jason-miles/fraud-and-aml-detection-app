@@ -55,6 +55,33 @@ ORDER BY model_version DESC LIMIT 1
     return rows[0] if rows else {}
 
 
+# ─────────────────────── Audit Trail ──────────────────────────────────────
+@router.get("/audit")
+def audit_trail(case_id: Optional[str] = None, limit: int = 100):
+    """Defensible audit trail — every case read, note, decision, and SAR action
+    stamped with acting persona + timestamp."""
+    where = "1=1"
+    params = []
+    if case_id:
+        where = "case_id = :cid"
+        params = [{"name": "cid", "value": case_id}]
+    return fetch_all(f"""
+SELECT event_ts, actor, action, case_id, detail, source
+FROM {GOLD_SCHEMA}.audit_log
+WHERE {where}
+ORDER BY event_ts DESC
+LIMIT {int(limit)}
+""", params or None)
+
+
+@router.get("/audit/summary")
+def audit_summary():
+    return fetch_all(f"""
+SELECT action, count(*) AS events, max(event_ts) AS last_seen
+FROM {GOLD_SCHEMA}.audit_log GROUP BY action ORDER BY events DESC
+""")
+
+
 # ─────────────────────── Perpetual KYC ────────────────────────────────────
 @router.get("/pkyc")
 def pkyc(min_risk: int = 0, limit: int = 100):
