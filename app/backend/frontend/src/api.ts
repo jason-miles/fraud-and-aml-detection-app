@@ -52,6 +52,7 @@ export const getPkycSummary = () => apiGet(`${A}/pkyc/summary`);
 export const getAnomalies = (limit = 100) => apiGet(`${A}/anomalies?limit=${limit}`);
 export const getModelGovernance = () => apiGet(`${A}/model-governance`);
 export const getModelDrift = () => apiGet(`${A}/model-drift`);
+export const getLlmEval = () => apiGet(`${A}/llm-eval`);
 export const getAudit = (limit = 100) => apiGet(`${A}/audit?limit=${limit}`);
 export const getAuditSummary = () => apiGet(`${A}/audit/summary`);
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getModelDrift, getAudit } from "../api";
+import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getModelDrift, getLlmEval, getAudit } from "../api";
 import { Loading, num, money } from "../components/ui";
 
 function Badge({ s }: { s: string }) {
@@ -74,10 +74,11 @@ function AuditTrail() {
 function ModelGovernance() {
   const [m, setM] = useState<any>(null);
   const [drift, setDrift] = useState<any>(null);
+  const [ev, setEv] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    Promise.all([getModelGovernance(), getModelDrift().catch(() => null)])
-      .then(([mg, dr]) => { setM(mg); setDrift(dr); setLoading(false); })
+    Promise.all([getModelGovernance(), getModelDrift().catch(() => null), getLlmEval().catch(() => null)])
+      .then(([mg, dr, le]) => { setM(mg); setDrift(dr); setEv(le); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
   if (loading) return <Loading what="model validation record" />;
@@ -139,6 +140,26 @@ function ModelGovernance() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {ev && ev.summary && num(ev.summary.runs) > 0 && (
+        <div className="panel">
+          <h3 className="left">LLM Evaluation & Guardrails — SAR narrative
+            <span className="badge" style={{ marginLeft: 10, background: num(ev.summary.overall_pass_rate) >= 0.8 ? "var(--navy)" : "#b54708", color: "#fff" }}>
+              {pct(ev.summary.overall_pass_rate)} pass
+            </span>
+          </h3>
+          <p className="muted" style={{ margin: "4px 0 14px" }}>
+            LLM-as-judge groundedness + completeness and a deterministic PII/length guardrail, run over generated SARs
+            ({ev.summary.runs} run{num(ev.summary.runs) === 1 ? "" : "s"}). An auditable record of how the GenAI surface is validated.
+          </p>
+          <div className="kpis">
+            <div className="kpi"><div className="label">Groundedness</div><div className="value navy">{pct(ev.summary.avg_groundedness)}</div></div>
+            <div className="kpi"><div className="label">Completeness</div><div className="value navy">{pct(ev.summary.avg_completeness)}</div></div>
+            <div className="kpi"><div className="label">Guardrail pass</div><div className="value navy">{pct(ev.summary.guardrail_pass_rate)}</div></div>
+            <div className="kpi"><div className="label">Overall pass</div><div className="value" style={{ color: num(ev.summary.overall_pass_rate) >= 0.8 ? "var(--navy)" : "var(--critical)" }}>{pct(ev.summary.overall_pass_rate)}</div></div>
+          </div>
         </div>
       )}
     </>
