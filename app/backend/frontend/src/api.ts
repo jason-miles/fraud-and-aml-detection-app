@@ -35,6 +35,9 @@ export const caseAction = (b: any) => apiPost(`${S}/case/action`, b);
 export const agentChat = (b: any) => apiPost(`${S}/agent/chat`, b);
 export const sarGenerate = (b: any) => apiPost(`${S}/sar/generate`, b);
 export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
+export const sarOrchestrate = (b: any) => apiPost(`/api/sar/orchestrate`, b);
+export const goamlUrl = (caseId: string, narrative = "") =>
+  `/api/sar/goaml/${encodeURIComponent(caseId)}?narrative=${encodeURIComponent(narrative.slice(0, 1200))}`;
 // Graph
 export const getGraph = (q = "", limit = 12) =>
   apiGet(`${S}/graph?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);

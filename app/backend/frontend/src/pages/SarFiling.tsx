@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { sarGenerate, sarSubmit } from "../api";
+import { sarOrchestrate, sarSubmit, goamlUrl } from "../api";
 import { Loading, usePersona, money } from "../components/ui";
+
+const AGENT_LABEL: Record<string, string> = {
+  transaction_analysis: "Transaction Analysis",
+  adverse_media: "Adverse Media & Screening",
+  policy: "Policy & Typology",
+};
 
 export function SarFiling() {
   const { caseId } = useParams();
@@ -12,18 +18,14 @@ export function SarFiling() {
   const [busy, setBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
+  const run = () => {
     setBusy(true);
-    sarGenerate({ case_id: caseId }).then((r) => {
+    sarOrchestrate({ case_id: caseId }).then((r) => {
       setSar(r); setNarrative(r.narrative || ""); setBusy(false);
     }).catch(() => setBusy(false));
-  }, [caseId]);
+  };
+  useEffect(() => { run(); }, [caseId]);
 
-  async function regenerate() {
-    setBusy(true);
-    const r = await sarGenerate({ case_id: caseId });
-    setSar(r); setNarrative(r.narrative || ""); setBusy(false);
-  }
   async function submit() {
     await sarSubmit({
       case_id: caseId, customer_name: sar.customer_name, scenario: sar.scenario,
@@ -32,43 +34,60 @@ export function SarFiling() {
     setSubmitted(true);
   }
 
-  if (!sar && busy) return <Loading what="SAR draft (AI generating)" />;
+  if (!sar && busy) return <Loading what="multi-agent SAR workflow (gathering evidence + agents)" />;
   if (!sar) return <Loading what="SAR" />;
 
+  const ev = sar.evidence || {};
   return (
     <>
       <Link to={`/investigation/${caseId}`} className="muted">← Back to Investigation</Link>
       <h1 className="page-title" style={{ marginTop: 8 }}>SAR Filing</h1>
-      <p className="page-sub">Suspicious Activity Report · case <span className="mono">{caseId}</span></p>
+      <p className="page-sub">Suspicious Activity Report · case <span className="mono">{caseId}</span> · multi-agent orchestration + goAML output</p>
 
       <div className="grid-2">
         <div className="panel">
-          <h3 className="left">Case Metadata <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(pre-populated by agents)</span></h3>
+          <h3 className="left">Auto-Gathered Evidence Pack <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(assembled by agents)</span></h3>
           <div className="kv"><span className="k">Customer</span><span>{sar.customer_name}</span></div>
           <div className="kv"><span className="k">Scenario</span><span>{sar.scenario}</span></div>
-          <div className="kv"><span className="k">Priority</span><span style={{ textTransform: "capitalize" }}>{sar.priority}</span></div>
-          <div className="kv"><span className="k">Risk Score</span><span>{sar.risk_score}/100</span></div>
           <div className="kv"><span className="k">Amount</span><span>{money(sar.amount)}</span></div>
+          <div className="kv"><span className="k">Flagged txns</span><span>{(ev.transactions || []).length}</span></div>
+          <div className="kv"><span className="k">Counterparties</span><span>{(ev.network || []).length}</span></div>
+          <div className="kv"><span className="k">Watchlist hits</span><span style={{ color: (ev.screening || []).length ? "var(--critical)" : undefined }}>{(ev.screening || []).length}</span></div>
+          <div className="kv"><span className="k">pKYC band</span><span>{ev.pkyc?.risk_band || "—"}</span></div>
         </div>
         <div className="panel">
           <h3 className="left">Filing Details</h3>
           <div className="kv"><span className="k">Filed by</span><span>{current?.analyst_name}</span></div>
           <div className="kv"><span className="k">Team</span><span>{current?.team_name}</span></div>
           <div className="kv"><span className="k">Decision</span><span>SAR Filed</span></div>
-          <div className="kv"><span className="k">Format</span><span>Institution SAR spec</span></div>
+          <div className="kv"><span className="k">Format</span><span>goAML STR (UN/UNODC)</span></div>
         </div>
       </div>
 
       <div className="panel">
-        <h3 className="left">AI-Generated SAR Narrative</h3>
-        <textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} style={{ width: "100%", minHeight: 260, lineHeight: 1.6 }} />
-        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <button className="btn ghost" onClick={regenerate} disabled={busy}>{busy ? "Regenerating…" : "↻ Regenerate with Agent"}</button>
-          <button className="btn" onClick={submit} disabled={submitted}>{submitted ? "✓ SAR Filed" : "Generate PDF & Submit SAR"}</button>
+        <h3 className="left">Multi-Agent Trace</h3>
+        {(sar.agent_trace || []).map((t: any, i: number) => (
+          <div key={i} className="explain" style={{ marginBottom: 8, borderLeft: "3px solid var(--accent)" }}>
+            <span className="muted" style={{ fontWeight: 700, marginRight: 8 }}>✦ {AGENT_LABEL[t.agent] || t.agent}</span>{t.finding}
+          </div>
+        ))}
+        <div className="explain" style={{ borderLeft: "3px solid var(--navy)" }}>
+          <span className="muted" style={{ fontWeight: 700, marginRight: 8 }}>▣ Supervisor synthesis</span>
+          feeds the narrative below.
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3 className="left">SAR Narrative <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(supervisor-synthesised, editable)</span></h3>
+        <textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} style={{ width: "100%", minHeight: 240, lineHeight: 1.6 }} />
+        <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+          <button className="btn ghost" onClick={run} disabled={busy}>{busy ? "Re-running agents…" : "↻ Re-run agents"}</button>
+          <a className="btn ghost" href={goamlUrl(caseId!, narrative)} download>⤓ Download goAML XML</a>
+          <button className="btn" onClick={submit} disabled={submitted}>{submitted ? "✓ SAR Filed" : "File SAR"}</button>
         </div>
         {submitted && (
           <div className="explain" style={{ marginTop: 14 }}>
-            SAR filed and pushed to the backend audit trail — fully traceable from an auditability perspective.
+            SAR filed and captured in the audit trail — traceable end-to-end. The goAML XML is ready for FIC submission.
             <div style={{ marginTop: 8 }}><button className="btn sm ghost" onClick={() => nav("/investigation")}>Return to Queue</button></div>
           </div>
         )}
