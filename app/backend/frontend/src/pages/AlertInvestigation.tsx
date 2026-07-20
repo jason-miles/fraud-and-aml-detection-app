@@ -13,17 +13,52 @@ const SCEN_COLORS: Record<string, string> = {
   "Third-Party Deposit Pattern": "#aeb6c4",
 };
 
+function sinceLabel(ts: number): string {
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  return `${m}m ago`;
+}
+
+function LiveDot({ on }: { on: boolean }) {
+  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%",
+    background: on ? "var(--low)" : "var(--muted)", marginRight: 4,
+    boxShadow: on ? "0 0 0 3px color-mix(in srgb, var(--low) 25%, transparent)" : "none" }} />;
+}
+
+const REFRESH_MS = 20000; // near-real-time queue refresh cadence
+
 export function AlertInvestigation() {
   const nav = useNavigate();
   const { current } = usePersona();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [, setTick] = useState(0); // ticks so the "updated Ns ago" label stays fresh
 
+  // Initial load (with spinner) whenever the persona changes.
   useEffect(() => {
     if (!current) return;
     setLoading(true);
-    getQueue(current.analyst_id).then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+    getQueue(current.analyst_id).then((d) => { setData(d); setUpdatedAt(Date.now()); setLoading(false); }).catch(() => setLoading(false));
   }, [current]);
+
+  // Live polling — silent refresh (no spinner), pausable.
+  useEffect(() => {
+    if (!current || !live) return;
+    const id = setInterval(() => {
+      getQueue(current.analyst_id).then((d) => { setData(d); setUpdatedAt(Date.now()); }).catch(() => {});
+    }, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [current, live]);
+
+  // Keep the "updated Ns ago" label fresh between refreshes.
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 10000);
+    return () => clearInterval(id);
+  }, []);
 
   if (loading || !data) return <Loading what="my queue" />;
   const k = data.kpis || {};
@@ -41,7 +76,13 @@ export function AlertInvestigation() {
 
   return (
     <>
-      <h1 className="page-title">My Queue — {current?.analyst_name}</h1>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <h1 className="page-title">My Queue — {current?.analyst_name}</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12 }}>
+          <span className="muted"><LiveDot on={live} /> {live ? "Live" : "Paused"}{updatedAt ? ` · updated ${sinceLabel(updatedAt)}` : ""}</span>
+          <button className="btn sm ghost" onClick={() => setLive((v) => !v)}>{live ? "Pause" : "Resume"}</button>
+        </div>
+      </div>
       <p className="page-sub">{current?.team_name}</p>
 
       <div className="kpis">
