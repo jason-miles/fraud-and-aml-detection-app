@@ -18,6 +18,8 @@ export function SarFiling() {
   const [busy, setBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [valid, setValid] = useState<any>(null);
+  const [approver, setApprover] = useState("");
+  const [submitErr, setSubmitErr] = useState("");
 
   const run = () => {
     setBusy(true);
@@ -31,10 +33,12 @@ export function SarFiling() {
   }, [caseId]);
 
   async function submit() {
-    await sarSubmit({
+    setSubmitErr("");
+    const r: any = await sarSubmit({
       case_id: caseId, customer_name: sar.customer_name, scenario: sar.scenario,
-      narrative, decision: "SAR Filed", filed_by: current?.analyst_name,
+      narrative, decision: "SAR Filed", filed_by: current?.analyst_name, approved_by: approver,
     });
+    if (r && r.ok === false) { setSubmitErr(r.error || "SAR filing rejected."); return; }
     setSubmitted(true);
   }
 
@@ -113,8 +117,20 @@ export function SarFiling() {
               {valid.valid ? "✓ goAML schema valid" : "✗ goAML issues"} ({valid.checks_passed}/{valid.checks_total})
             </span>
           )}
-          <button className="btn" onClick={submit} disabled={submitted}>{submitted ? "✓ SAR Filed" : "File SAR"}</button>
+          <button className="btn" onClick={submit}
+            disabled={submitted || !approver.trim() || approver.trim().toLowerCase() === (current?.analyst_name || "").toLowerCase()}>
+            {submitted ? "✓ SAR Filed" : "File SAR"}
+          </button>
         </div>
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span className="k" style={{ fontWeight: 600 }}>Four-eyes approver</span>
+          <input value={approver} onChange={(e) => setApprover(e.target.value)}
+            placeholder="second approver (must differ from filer)" style={{ minWidth: 280 }} />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Filing requires a second, distinct approver — {current?.analyst_name} is the filer.
+          </span>
+        </div>
+        {submitErr && <div className="explain" style={{ marginTop: 10, borderLeft: "3px solid var(--critical)" }}>{submitErr}</div>}
         {valid && !valid.valid && (valid.issues || []).length > 0 && (
           <ul className="muted" style={{ margin: "10px 0 0", fontSize: 12 }}>
             {valid.issues.map((iss: string, i: number) => <li key={i}>{iss}</li>)}

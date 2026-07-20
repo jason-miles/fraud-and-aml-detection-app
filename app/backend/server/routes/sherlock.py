@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from ..db import fetch_all, execute
 from ..config import GOLD_SCHEMA, SILVER_SCHEMA
+from ..casestate import can_transition, transition_error
 
 router = APIRouter(prefix="/api/sherlock", tags=["sherlock"])
 
@@ -200,6 +201,33 @@ VALUES (:id, :cid, :action, :reason, :actor, current_timestamp())
     return {"ok": True}
 
 
+class Transition(BaseModel):
+    case_id: str
+    target: str            # assigned | in_progress | escalated | closed
+    actor: str = "Sarah Chen"
+
+
+@router.post("/case/transition")
+def case_transition(t: Transition):
+    """Move a case to a new lifecycle status — only if the transition is valid
+    (state machine in server/casestate.py). Rejected moves are audited too."""
+    rows = fetch_all(f"SELECT status FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid",
+                     [{"name": "cid", "value": t.case_id}])
+    if not rows:
+        return {"ok": False, "error": "case not found"}
+    current = rows[0]["status"]
+    err = transition_error(current, t.target)
+    if err:
+        audit("transition_rejected", actor=t.actor, case_id=t.case_id,
+              detail=f"{current} -> {t.target}: {err}", source="workflow")
+        return {"ok": False, "error": err, "current": current}
+    execute(f"UPDATE {GOLD_SCHEMA}.sherlock_cases SET status = :s WHERE case_id = :cid",
+            [{"name": "s", "value": t.target}, {"name": "cid", "value": t.case_id}])
+    audit("case_transition", actor=t.actor, case_id=t.case_id,
+          detail=f"{current} -> {t.target}", source="workflow")
+    return {"ok": True, "from": current, "to": t.target}
+
+
 # ─────────────────── Multi-agent assistant (ai_query) ────────────────────
 AGENTS = {
     "supervisor": "You are the AML Multi-Agent Supervisor. Coordinate a concise, expert recommendation.",
@@ -283,21 +311,30 @@ class SarSubmit(BaseModel):
     narrative: str
     decision: str = "SAR Filed"
     filed_by: str = "Sarah Chen"
+    approved_by: str = ""      # four-eyes: a SECOND person must approve the filing
 
 
 @router.post("/sar/submit")
 def sar_submit(s: SarSubmit):
+    # Four-eyes control: a SAR filing must be approved by a second, distinct person.
+    approver = (s.approved_by or "").strip()
+    if not approver:
+        return {"ok": False, "error": "four-eyes: a second approver is required to file a SAR"}
+    if approver.casefold() == (s.filed_by or "").strip().casefold():
+        audit("sar_blocked", actor=s.filed_by, case_id=s.case_id,
+              detail="four-eyes violation: approver == filer", source="sar_filing")
+        return {"ok": False, "error": "four-eyes: the approver must differ from the filer"}
     execute(f"""
 INSERT INTO {GOLD_SCHEMA}.sherlock_sar_filings
-  (sar_id, case_id, customer_name, scenario, narrative, decision, filed_by, filed_at)
-VALUES (:id, :cid, :cust, :scen, :narr, :dec, :by, current_timestamp())
+  (sar_id, case_id, customer_name, scenario, narrative, decision, filed_by, filed_at, approved_by)
+VALUES (:id, :cid, :cust, :scen, :narr, :dec, :by, current_timestamp(), :appr)
 """, [{"name": "id", "value": str(uuid.uuid4())}, {"name": "cid", "value": s.case_id},
       {"name": "cust", "value": s.customer_name}, {"name": "scen", "value": s.scenario},
       {"name": "narr", "value": s.narrative}, {"name": "dec", "value": s.decision},
-      {"name": "by", "value": s.filed_by}])
+      {"name": "by", "value": s.filed_by}, {"name": "appr", "value": approver}])
     audit("sar_submit", actor=s.filed_by, case_id=s.case_id,
-          detail=f"{s.decision} — {s.scenario}", source="sar_filing")
-    return {"ok": True, "sar_id": s.case_id}
+          detail=f"{s.decision} — {s.scenario} (approved by {approver})", source="sar_filing")
+    return {"ok": True, "sar_id": s.case_id, "approved_by": approver}
 
 
 # ─────────────────────────── Graph Explorer ──────────────────────────────
