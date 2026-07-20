@@ -46,6 +46,7 @@ export const getScreeningSummary = () => apiGet(`${A}/screening/summary`);
 export const getPkyc = (minRisk = 0, limit = 100) => apiGet(`${A}/pkyc?min_risk=${minRisk}&limit=${limit}`);
 export const getPkycSummary = () => apiGet(`${A}/pkyc/summary`);
 export const getAnomalies = (limit = 100) => apiGet(`${A}/anomalies?limit=${limit}`);
+export const getModelGovernance = () => apiGet(`${A}/model-governance`);
 
 // GenAI
 const G = "/api/genai";

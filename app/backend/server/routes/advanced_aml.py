@@ -37,6 +37,24 @@ FROM {GOLD_SCHEMA}.sanctions_screening_hits GROUP BY list_type, confidence
 """)
 
 
+# ─────────────────────── Model Governance ─────────────────────────────────
+@router.get("/model-governance")
+def model_governance():
+    """Model risk management surface (regulators ask "how is the AI validated?").
+    Returns the registered SAR model's validation metrics, the equal-alert-budget
+    false-positive-reduction vs the legacy rules score, and governance metadata."""
+    rows = fetch_all(f"""
+SELECT model_name, model_version, algorithm, run_id,
+       roc_auc, precision, recall, f1,
+       model_fp, rules_fp, fp_reduction_pct,
+       n_features, n_labelled, positive_rate,
+       blend_model_weight, blend_rules_weight, governance_status, trained_at
+FROM {GOLD_SCHEMA}.ml_model_metrics
+ORDER BY model_version DESC LIMIT 1
+""")
+    return rows[0] if rows else {}
+
+
 # ─────────────────────── Perpetual KYC ────────────────────────────────────
 @router.get("/pkyc")
 def pkyc(min_risk: int = 0, limit: int = 100):

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScreening, getPkyc, getPkycSummary, getAnomalies } from "../api";
+import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance } from "../api";
 import { Loading, num, money } from "../components/ui";
 
 function Badge({ s }: { s: string }) {
@@ -9,19 +9,61 @@ function Badge({ s }: { s: string }) {
 }
 
 export function Compliance() {
-  const [tab, setTab] = useState<"screening" | "pkyc" | "anomaly">("screening");
+  const [tab, setTab] = useState<"screening" | "pkyc" | "anomaly" | "model">("screening");
   return (
     <>
       <h1 className="page-title">Compliance & Risk</h1>
-      <p className="page-sub">Sanctions & watchlist screening · perpetual KYC · behavioural peer-group anomaly detection.</p>
+      <p className="page-sub">Sanctions & watchlist screening · perpetual KYC · behavioural peer-group anomaly detection · model governance.</p>
       <div className="tabs">
         <button className={tab === "screening" ? "active" : ""} onClick={() => setTab("screening")}>Sanctions Screening</button>
         <button className={tab === "pkyc" ? "active" : ""} onClick={() => setTab("pkyc")}>Perpetual KYC</button>
         <button className={tab === "anomaly" ? "active" : ""} onClick={() => setTab("anomaly")}>Peer Anomalies</button>
+        <button className={tab === "model" ? "active" : ""} onClick={() => setTab("model")}>Model Governance</button>
       </div>
       {tab === "screening" && <Screening />}
       {tab === "pkyc" && <Pkyc />}
       {tab === "anomaly" && <Anomaly />}
+      {tab === "model" && <ModelGovernance />}
+    </>
+  );
+}
+
+function ModelGovernance() {
+  const [m, setM] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { getModelGovernance().then((r) => { setM(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  if (loading) return <Loading what="model validation record" />;
+  if (!m || m.model_version == null) return <p className="muted">No registered model metrics found. Train &amp; score the SAR model first.</p>;
+  const pct = (x: any) => `${(num(x) * 100).toFixed(1)}%`;
+  return (
+    <>
+      <div className="kpis">
+        <div className="kpi"><div className="label">False Positives ↓</div><div className="value red">{num(m.fp_reduction_pct).toFixed(1)}%</div></div>
+        <div className="kpi"><div className="label">ROC-AUC</div><div className="value navy">{num(m.roc_auc).toFixed(3)}</div></div>
+        <div className="kpi"><div className="label">Precision</div><div className="value navy">{pct(m.precision)}</div></div>
+        <div className="kpi"><div className="label">Recall</div><div className="value navy">{pct(m.recall)}</div></div>
+      </div>
+
+      <div className="panel">
+        <h3 className="left">Model Validation Record — SAR-propensity classifier</h3>
+        <p className="muted" style={{ margin: "4px 0 14px" }}>
+          At an equal alert budget, the served model surfaces <strong>{num(m.fp_reduction_pct).toFixed(1)}% fewer false positives</strong> than
+          the legacy rules score ({m.model_fp} vs {m.rules_fp} on the held-out test set) — the same true-positive workload, fewer wasted investigations.
+          The displayed AI risk blends the model ({pct(m.blend_model_weight)}) with rules ({pct(m.blend_rules_weight)}), with rules as a floor.
+        </p>
+        <table>
+          <tbody>
+            <tr><td>Model</td><td className="mono">{m.model_name}</td></tr>
+            <tr><td>Version</td><td><span className="badge">v{m.model_version}</span> · {m.governance_status}</td></tr>
+            <tr><td>Algorithm</td><td>{m.algorithm}</td></tr>
+            <tr><td>Registry</td><td>Unity Catalog Model Registry (MLflow)</td></tr>
+            <tr><td>MLflow run</td><td className="mono">{m.run_id}</td></tr>
+            <tr><td>Features</td><td>{m.n_features}</td></tr>
+            <tr><td>Labelled cases</td><td>{m.n_labelled} ({pct(m.positive_rate)} SAR-filed)</td></tr>
+            <tr><td>F1</td><td>{num(m.f1).toFixed(3)}</td></tr>
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }
