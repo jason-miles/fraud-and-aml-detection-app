@@ -69,7 +69,7 @@ export function AlertInvestigation() {
       <div className="panel">
         <h3 className="left">Active Alerts</h3>
         <table>
-          <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Rules Score</th><th>AI Risk</th><th>Priority</th><th>Amount</th><th>Days</th><th>Action</th></tr></thead>
+          <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Rules Score</th><th>AI Risk</th><th>Priority</th><th>Amount</th><th>Days</th><th>SLA</th><th>Action</th></tr></thead>
           <tbody>
             {(data.active_alerts || []).map((a: any) => <AlertRow key={a.case_id} a={a} nav={nav} />)}
           </tbody>
@@ -100,16 +100,27 @@ function AlertRow({ a, nav }: { a: any; nav: any }) {
         <td><Sev s={a.priority} /></td>
         <td style={{ fontWeight: 600 }}>{money(a.amount)}</td>
         <td style={{ color: num(a.days_open) > 90 ? "var(--critical)" : undefined }}>{a.days_open}</td>
+        <td>{a.sla ? <SlaBadge sla={a.sla} /> : <span className="muted">—</span>}</td>
         <td style={{ display: "flex", gap: 6 }}>
           <button className="btn sm ghost" onClick={ai} disabled={busy} title="AI: why this matters">✦</button>
           <button className="btn sm" onClick={() => nav(`/investigation/${a.case_id}`)}>Investigate</button>
         </td>
       </tr>
       {blurb && (
-        <tr><td colSpan={9} style={{ background: "var(--canvas)", borderLeft: "3px solid var(--accent)" }}>
+        <tr><td colSpan={10} style={{ background: "var(--canvas)", borderLeft: "3px solid var(--accent)" }}>
           <span className="muted" style={{ fontWeight: 700, marginRight: 8 }}>✦ AI</span>{blurb}
         </td></tr>
       )}
     </>
   );
+}
+
+export function SlaBadge({ sla }: { sla: any }) {
+  const color: Record<string, string> = { on_track: "var(--navy)", at_risk: "#b54708", breached: "var(--critical)" };
+  const label: Record<string, string> = { on_track: "On track", at_risk: "At risk", breached: "Breached" };
+  const s = sla.status || "on_track";
+  const tip = sla.breached
+    ? `${-sla.days_remaining}d over ${sla.target_days}d SLA`
+    : `${sla.days_remaining}d left of ${sla.target_days}d SLA`;
+  return <span className="badge" title={tip} style={{ background: color[s], color: "#fff" }}>{label[s] || s}</span>;
 }

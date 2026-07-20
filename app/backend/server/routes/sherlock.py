@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from ..db import fetch_all, execute
 from ..config import GOLD_SCHEMA, SILVER_SCHEMA
 from ..casestate import can_transition, transition_error
+from ..sla import sla_status
 
 router = APIRouter(prefix="/api/sherlock", tags=["sherlock"])
 
@@ -109,6 +110,9 @@ ORDER BY coalesce(s.ai_risk, c.risk_score) DESC,
          c.days_open DESC
 LIMIT 100
 """, p)
+    # Enrich each active case with its SLA status (priority-driven target vs days_open).
+    for a in active:
+        a["sla"] = sla_status(a.get("priority"), a.get("days_open"))
     return {"kpis": kpis[0] if kpis else {}, "weekly": weekly, "active_alerts": active}
 
 
@@ -161,6 +165,7 @@ WHERE case_id = :cid ORDER BY created_at DESC LIMIT 20
     case["counterparties"] = parties
     case["notes"] = notes
     case["actions"] = actions
+    case["sla"] = sla_status(case.get("priority"), case.get("days_open"))
     return case
 
 
@@ -226,6 +231,36 @@ def case_transition(t: Transition):
     audit("case_transition", actor=t.actor, case_id=t.case_id,
           detail=f"{current} -> {t.target}", source="workflow")
     return {"ok": True, "from": current, "to": t.target}
+
+
+class Reassign(BaseModel):
+    case_id: str
+    to_analyst_id: str
+    to_analyst_name: str
+    to_team_id: str = ""
+    to_team_name: str = ""
+    actor: str = "Sarah Chen"
+
+
+@router.post("/case/reassign")
+def case_reassign(r: Reassign):
+    """Reassign a case to another analyst/team (audited)."""
+    rows = fetch_all(f"SELECT analyst_name FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid",
+                     [{"name": "cid", "value": r.case_id}])
+    if not rows:
+        return {"ok": False, "error": "case not found"}
+    prev = rows[0]["analyst_name"]
+    sets = ["analyst_id = :aid", "analyst_name = :aname"]
+    params = [{"name": "aid", "value": r.to_analyst_id}, {"name": "aname", "value": r.to_analyst_name},
+              {"name": "cid", "value": r.case_id}]
+    if r.to_team_id:
+        sets += ["team_id = :tid", "team_name = :tname"]
+        params += [{"name": "tid", "value": r.to_team_id}, {"name": "tname", "value": r.to_team_name}]
+    execute(f"UPDATE {GOLD_SCHEMA}.sherlock_cases SET {', '.join(sets)} WHERE case_id = :cid", params)
+    audit("case_reassign", actor=r.actor, case_id=r.case_id,
+          detail=f"{prev} -> {r.to_analyst_name}" + (f" ({r.to_team_name})" if r.to_team_name else ""),
+          source="workflow")
+    return {"ok": True, "from": prev, "to": r.to_analyst_name}
 
 
 # ─────────────────── Multi-agent assistant (ai_query) ────────────────────

@@ -31,6 +31,8 @@ export const getCase = (caseId: string, actor = "") =>
   apiGet(`${S}/case/${encodeURIComponent(caseId)}${actor ? `?actor=${encodeURIComponent(actor)}` : ""}`);
 export const addNote = (b: any) => apiPost(`${S}/case/note`, b);
 export const caseAction = (b: any) => apiPost(`${S}/case/action`, b);
+export const caseTransition = (b: any) => apiPost(`${S}/case/transition`, b);
+export const caseReassign = (b: any) => apiPost(`${S}/case/reassign`, b);
 // Agent + SAR
 export const agentChat = (b: any) => apiPost(`${S}/agent/chat`, b);
 export const sarGenerate = (b: any) => apiPost(`${S}/sar/generate`, b);

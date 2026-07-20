@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getCase, addNote, caseAction, agentChat, caseTriage } from "../api";
+import { getCase, addNote, caseAction, agentChat, caseTriage, caseReassign } from "../api";
 import { Sev, Loading, usePersona, money, fmtDate, num } from "../components/ui";
+import { SlaBadge } from "./AlertInvestigation";
 
 const AGENTS = [
   { id: "supervisor", label: "Supervisor" },
@@ -26,6 +27,16 @@ export function Investigation() {
     if (action === "proceed_sar") { nav(`/sar/${c.case_id}`); return; }
     load();
   }
+  async function reassign() {
+    const to = window.prompt("Reassign this case to which analyst?");
+    if (!to || !to.trim()) return;
+    await caseReassign({
+      case_id: c.case_id,
+      to_analyst_id: "AN_" + to.trim().split(" ")[0].toUpperCase(),
+      to_analyst_name: to.trim(), actor: current?.analyst_name,
+    });
+    load();
+  }
   async function saveNote() {
     if (!note.trim()) return;
     await addNote({ case_id: c.case_id, note, author: current?.analyst_name });
@@ -48,7 +59,8 @@ export function Investigation() {
         </div>
         <div className="kpi"><div className="label">Amount</div><div className="value navy" style={{ fontSize: 22 }}>{money(c.amount)}</div></div>
         <div className="kpi"><div className="label">Days Open</div><div className="value" style={{ color: num(c.days_open) > 90 ? "var(--critical)" : "var(--navy)" }}>{c.days_open}</div></div>
-        <div className="kpi"><div className="label">Investigation Hrs</div><div className="value navy">{c.investigation_hours}</div></div>
+        <div className="kpi"><div className="label">SLA {c.sla ? `(${c.sla.target_days}d)` : ""}</div>
+          <div className="value" style={{ fontSize: 18 }}>{c.sla ? <SlaBadge sla={c.sla} /> : "—"}</div></div>
       </div>
 
       <div className="grid-2">
@@ -101,6 +113,7 @@ export function Investigation() {
               <button className="btn warn" onClick={() => act("escalate")}>⬆ Escalate to Specialist Team</button>
               <button className="btn ghost" onClick={() => act("dismiss")}>✕ Dismiss as False Positive</button>
               <button className="btn" onClick={() => act("proceed_sar")}>→ Proceed to SAR Filing</button>
+              <button className="btn ghost" onClick={reassign}>⇄ Reassign</button>
             </div>
             {(c.actions || []).length > 0 && (
               <div style={{ marginTop: 14 }}>
