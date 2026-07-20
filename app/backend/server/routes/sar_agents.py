@@ -16,6 +16,7 @@ auto-gathered evidence pack:
 All ai_query prompts are bound as parameters (never string-interpolated into SQL).
 """
 import html
+import xml.etree.ElementTree as ET
 from typing import Optional
 from fastapi import APIRouter, Response
 from pydantic import BaseModel
@@ -300,3 +301,69 @@ def goaml(case_id: str, narrative: str = ""):
         content=xml, media_type="application/xml",
         headers={"Content-Disposition": f'attachment; filename="SAR_goAML_{case_id}.xml"'},
     )
+
+
+# ─────────────────── goAML structural validation ─────────────────────────
+# Encodes the goAML STR report's required structure/cardinality/types (matching the
+# UN/UNODC goAML schema shape we emit). Production step: validate against the OFFICIAL
+# goAML XSD via lxml.etree.XMLSchema — swap this pure check for that when the XSD +
+# lxml are available. Kept dependency-free (stdlib ElementTree) and unit-testable.
+def validate_goaml(xml: str) -> dict:
+    issues = []
+    checks = [
+        # (label, predicate over root)
+        ("well-formed XML", None),
+        ("root element is <report>", lambda r: r.tag == "report"),
+        ("rentity_id present", lambda r: (r.findtext("rentity_id") or "").strip() != ""),
+        ("report_code == 'STR'", lambda r: (r.findtext("report_code") or "") == "STR"),
+        ("entity_reference present", lambda r: (r.findtext("entity_reference") or "").strip() != ""),
+        ("activity block present", lambda r: r.find("activity") is not None),
+        ("suspicious_party.party_name present",
+         lambda r: (r.findtext("activity/suspicious_party/party_name") or "").strip() != ""),
+        ("goods_services.currency_code present",
+         lambda r: (r.findtext("activity/goods_services/currency_code") or "").strip() != ""),
+        ("total_amount is numeric",
+         lambda r: _is_num(r.findtext("activity/goods_services/total_amount"))),
+        ("at least one transaction",
+         lambda r: len(r.findall("activity/transactions/transaction")) >= 1),
+        ("every transaction has number + numeric amount",
+         lambda r: all((t.findtext("transactionnumber") or "").strip() != ""
+                       and _is_num(t.findtext("amount_local"))
+                       for t in r.findall("activity/transactions/transaction"))),
+        ("reason present", lambda r: (r.findtext("activity/reason") or "").strip() != ""),
+    ]
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError as e:
+        return {"valid": False, "checks_total": len(checks), "checks_passed": 0,
+                "issues": [f"not well-formed: {e}"]}
+
+    passed = 1  # well-formed already succeeded
+    for label, pred in checks[1:]:
+        try:
+            ok = bool(pred(root))
+        except Exception:
+            ok = False
+        if ok:
+            passed += 1
+        else:
+            issues.append(f"failed: {label}")
+    return {"valid": len(issues) == 0, "checks_total": len(checks),
+            "checks_passed": passed, "issues": issues}
+
+
+def _is_num(v) -> bool:
+    if v is None or str(v).strip() == "":
+        return False
+    try:
+        float(v)
+        return True
+    except ValueError:
+        return False
+
+
+@router.get("/goaml/validate/{case_id}")
+def goaml_validate(case_id: str, narrative: str = ""):
+    """Validate the case's goAML XML against the required STR structure."""
+    xml = build_goaml_xml(case_id, narrative)
+    return validate_goaml(xml)

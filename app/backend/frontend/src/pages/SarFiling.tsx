@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { sarOrchestrate, sarSubmit, goamlUrl } from "../api";
+import { sarOrchestrate, sarSubmit, goamlUrl, goamlValidate } from "../api";
 import { Loading, usePersona, money } from "../components/ui";
 
 const AGENT_LABEL: Record<string, string> = {
@@ -17,6 +17,7 @@ export function SarFiling() {
   const [narrative, setNarrative] = useState("");
   const [busy, setBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [valid, setValid] = useState<any>(null);
 
   const run = () => {
     setBusy(true);
@@ -24,7 +25,10 @@ export function SarFiling() {
       setSar(r); setNarrative(r.narrative || ""); setBusy(false);
     }).catch(() => setBusy(false));
   };
-  useEffect(() => { run(); }, [caseId]);
+  useEffect(() => {
+    run();
+    goamlValidate(caseId!).then(setValid).catch(() => setValid(null));
+  }, [caseId]);
 
   async function submit() {
     await sarSubmit({
@@ -103,8 +107,19 @@ export function SarFiling() {
         <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
           <button className="btn ghost" onClick={run} disabled={busy}>{busy ? "Re-running agents…" : "↻ Re-run agents"}</button>
           <a className="btn ghost" href={goamlUrl(caseId!, narrative)} download>⤓ Download goAML XML</a>
+          {valid && (
+            <span className="badge" title={(valid.issues || []).join("; ")}
+              style={{ alignSelf: "center", background: valid.valid ? "var(--navy)" : "var(--critical)", color: "#fff" }}>
+              {valid.valid ? "✓ goAML schema valid" : "✗ goAML issues"} ({valid.checks_passed}/{valid.checks_total})
+            </span>
+          )}
           <button className="btn" onClick={submit} disabled={submitted}>{submitted ? "✓ SAR Filed" : "File SAR"}</button>
         </div>
+        {valid && !valid.valid && (valid.issues || []).length > 0 && (
+          <ul className="muted" style={{ margin: "10px 0 0", fontSize: 12 }}>
+            {valid.issues.map((iss: string, i: number) => <li key={i}>{iss}</li>)}
+          </ul>
+        )}
         {submitted && (
           <div className="explain" style={{ marginTop: 14 }}>
             SAR filed and captured in the audit trail — traceable end-to-end. The goAML XML is ready for FIC submission.

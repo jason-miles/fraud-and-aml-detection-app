@@ -5,7 +5,7 @@ _evidence_brief() against a synthetic evidence pack.
 """
 import xml.dom.minidom as minidom
 
-from server.routes.sar_agents import goaml_from_evidence, _evidence_brief, _x
+from server.routes.sar_agents import goaml_from_evidence, _evidence_brief, _x, validate_goaml
 
 
 EV = {
@@ -60,6 +60,28 @@ def test_x_escapes_and_skips_empty():
     assert _x("t", None) == ""
     assert _x("t", "") == ""
     assert _x("t", "a<b&c") == "    <t>a&lt;b&amp;c</t>\n"
+
+
+def test_validate_goaml_passes_on_generated_xml():
+    xml = goaml_from_evidence(EV, narrative="A sufficiently detailed SAR narrative.")
+    res = validate_goaml(xml)
+    assert res["valid"] is True, res["issues"]
+    assert res["checks_passed"] == res["checks_total"]
+
+
+def test_validate_goaml_flags_not_well_formed():
+    res = validate_goaml("<report><activity>")  # unclosed
+    assert res["valid"] is False
+    assert res["checks_passed"] == 0
+    assert any("well-formed" in i for i in res["issues"])
+
+
+def test_validate_goaml_flags_missing_required():
+    # well-formed but wrong report_code + no transactions/party
+    res = validate_goaml("<report><report_code>XYZ</report_code><activity></activity></report>")
+    assert res["valid"] is False
+    assert any("STR" in i for i in res["issues"])
+    assert any("transaction" in i for i in res["issues"])
 
 
 def test_evidence_brief_mentions_signals():

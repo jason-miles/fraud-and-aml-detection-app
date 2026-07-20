@@ -38,6 +38,8 @@ export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
 export const sarOrchestrate = (b: any) => apiPost(`/api/sar/orchestrate`, b);
 export const goamlUrl = (caseId: string, narrative = "") =>
   `/api/sar/goaml/${encodeURIComponent(caseId)}?narrative=${encodeURIComponent(narrative.slice(0, 1200))}`;
+export const goamlValidate = (caseId: string) =>
+  apiGet(`/api/sar/goaml/validate/${encodeURIComponent(caseId)}`);
 // Graph
 export const getGraph = (q = "", limit = 12) =>
   apiGet(`${S}/graph?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
