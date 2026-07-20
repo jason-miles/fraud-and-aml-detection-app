@@ -21,11 +21,35 @@ from fastapi import APIRouter, Response
 from pydantic import BaseModel
 
 from ..db import fetch_all
-from ..config import GOLD_SCHEMA, SILVER_SCHEMA
+from ..config import CATALOG, GOLD_SCHEMA, SILVER_SCHEMA, get_workspace_client
 
 router = APIRouter(prefix="/api/sar", tags=["sar-agents"])
 
 LLM = "databricks-meta-llama-3-3-70b-instruct"
+ADVERSE_MEDIA_INDEX = f"{CATALOG}.{GOLD_SCHEMA}.adverse_media_index"
+
+
+def retrieve_adverse_media(query: str, k: int = 3) -> list:
+    """Vector-search the adverse-media corpus for evidence relevant to the subject.
+    Grounds the SAR narrative in actual retrieved articles (RAG) rather than a
+    metadata-only prompt. Best-effort: returns [] on any failure so SAR still works."""
+    try:
+        w = get_workspace_client()
+        r = w.vector_search_indexes.query_index(
+            index_name=ADVERSE_MEDIA_INDEX,
+            columns=["article_id", "headline", "source", "published_at"],
+            query_text=query, num_results=k,
+        )
+        rows = (r.result.data_array or []) if r.result else []
+        out = []
+        for row in rows:
+            # columns order: article_id, headline, source, published_at, score
+            out.append({"article_id": row[0], "headline": row[1], "source": row[2],
+                        "published_at": row[3],
+                        "score": round(float(row[4]), 3) if len(row) > 4 and row[4] is not None else None})
+        return out
+    except Exception:
+        return []
 
 # Reporting-entity constants for the goAML header (the filing institution).
 RE = {
@@ -86,8 +110,11 @@ SELECT dynamic_risk, risk_band, edd_review_required, risk_drivers,
 FROM {GOLD_SCHEMA}.pkyc_customer_risk WHERE customer_id = :cust
 """, cp) if cust else None
 
+    # RAG: retrieve adverse-media evidence relevant to the subject + typology.
+    media = retrieve_adverse_media(f"{case.get('customer_name')} {case.get('scenario')}", k=3)
+
     return {"case": case, "transactions": txns, "network": network,
-            "screening": screening, "pkyc": pkyc}
+            "screening": screening, "pkyc": pkyc, "adverse_media": media}
 
 
 def _evidence_brief(ev: dict) -> str:
@@ -115,6 +142,10 @@ def _evidence_brief(ev: dict) -> str:
         k = ev["pkyc"]
         lines.append(f"Perpetual-KYC dynamic risk {k['dynamic_risk']} band {k['risk_band']}; "
                      f"EDD required: {k['edd_review_required']}; drivers: {k['risk_drivers']}.")
+    if ev.get("adverse_media"):
+        m = ev["adverse_media"]
+        lines.append("Retrieved adverse-media (cite by source): "
+                     + "; ".join(f"\"{a['headline']}\" ({a['source']}, {a['published_at']})" for a in m[:3]) + ".")
     return " ".join(lines)
 
 
@@ -162,7 +193,9 @@ def orchestrate(req: OrchestrateReq):
         brief,
         "Synthesise a concise, regulator-ready SAR narrative with: (1) summary of "
         "suspicious activity, (2) the pattern detected, (3) why it is suspicious with "
-        f"reference to the specialist findings, (4) recommended action. Specialist findings: {findings}",
+        "reference to the specialist findings, (4) recommended action. Where the "
+        "evidence lists retrieved adverse-media articles, CITE them by source in the "
+        f"narrative. Specialist findings: {findings}",
     )
     c = ev["case"]
     return {
@@ -172,6 +205,7 @@ def orchestrate(req: OrchestrateReq):
         "evidence": {
             "transactions": ev["transactions"], "network": ev["network"],
             "screening": ev["screening"], "pkyc": ev["pkyc"],
+            "adverse_media": ev.get("adverse_media", []),
         },
         "agent_trace": trace,
         "narrative": supervisor,

@@ -53,6 +53,7 @@ export function SarFiling() {
           <div className="kv"><span className="k">Flagged txns</span><span>{(ev.transactions || []).length}</span></div>
           <div className="kv"><span className="k">Counterparties</span><span>{(ev.network || []).length}</span></div>
           <div className="kv"><span className="k">Watchlist hits</span><span style={{ color: (ev.screening || []).length ? "var(--critical)" : undefined }}>{(ev.screening || []).length}</span></div>
+          <div className="kv"><span className="k">Adverse media</span><span>{(ev.adverse_media || []).length} retrieved</span></div>
           <div className="kv"><span className="k">pKYC band</span><span>{ev.pkyc?.risk_band || "—"}</span></div>
         </div>
         <div className="panel">
@@ -63,6 +64,25 @@ export function SarFiling() {
           <div className="kv"><span className="k">Format</span><span>goAML STR (UN/UNODC)</span></div>
         </div>
       </div>
+
+      {(ev.adverse_media || []).length > 0 && (
+        <div className="panel">
+          <h3 className="left">Grounded Adverse Media <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(vector-search retrieved — cited in the narrative)</span></h3>
+          <table>
+            <thead><tr><th>Headline</th><th>Source</th><th>Published</th><th>Relevance</th></tr></thead>
+            <tbody>
+              {ev.adverse_media.map((a: any, i: number) => (
+                <tr key={i}>
+                  <td>{a.headline}</td>
+                  <td className="muted">{a.source}</td>
+                  <td className="muted mono">{a.published_at}</td>
+                  <td><span style={{ fontWeight: 700, color: a.score >= 0.7 ? "var(--critical)" : "var(--navy)" }}>{a.score != null ? a.score.toFixed(2) : "—"}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="panel">
         <h3 className="left">Multi-Agent Trace</h3>
