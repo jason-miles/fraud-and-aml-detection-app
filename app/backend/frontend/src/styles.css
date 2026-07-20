@@ -23,6 +23,32 @@
   --down: #087443;
   --shadow: 0 1px 2px rgba(48,56,74,.05), 0 8px 30px rgba(48,56,74,.06);
   --radius: 3px;
+  --graph-bg: #fbfcfe;
+}
+/* Dark theme — same variable contract, flipped surfaces. Gold accent retained;
+   severity colours brightened for contrast on dark. */
+:root[data-theme="dark"] {
+  --navy: #e8ecf3;          /* headings/text invert to light on dark */
+  --navy-2: #cbd3e0;
+  --bg: #171b24;
+  --canvas: #1e232e;
+  --panel: #1e232e;
+  --panel-2: #262d3a;
+  --border: #333a48;
+  --text: #dce1ea;
+  --muted: #98a1b3;
+  --accent: #d8b45e;
+  --accent-2: #8aa0b6;
+  --link: #d8b45e;
+  --critical: #f0736a;
+  --high: #e0975a;
+  --medium: #d7b45a;
+  --low: #57c08a;
+  --ok: #57c08a;
+  --up: #f0736a;
+  --down: #57c08a;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+  --graph-bg: #1a1f29;
 }
 * { box-sizing: border-box; }
 body {
@@ -39,6 +65,9 @@ h1,h2,h3 { font-family: "Libre Caslon Text", Georgia, serif; color: var(--navy);
   background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20;
 }
 .logo { display: flex; align-items: center; gap: 11px; font-family: "Libre Caslon Text", Georgia, serif; font-size: 20px; color: var(--navy); }
+.theme-toggle { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); cursor: pointer; font-size: 15px; line-height: 1; }
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .logo .mark {
   width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
   border: 1.5px solid var(--accent); color: var(--accent); font-size: 14px; background: transparent;

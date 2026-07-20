@@ -1,6 +1,21 @@
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { PersonaProvider, usePersona } from "./components/ui";
 import { BrandMark } from "./components/Logo";
+
+// Theme: persisted to localStorage, defaulting to the OS preference.
+function useTheme(): [string, () => void] {
+  const [theme, setTheme] = useState<string>(() => {
+    const saved = localStorage.getItem("sentinel-theme");
+    if (saved) return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("sentinel-theme", theme);
+  }, [theme]);
+  return [theme, () => setTheme((t) => (t === "dark" ? "light" : "dark"))];
+}
 import { Landing } from "./pages/Landing";
 import { ExecutiveOverview } from "./pages/ExecutiveOverview";
 import { AlertInvestigation } from "./pages/AlertInvestigation";
@@ -13,6 +28,7 @@ import { Reports } from "./pages/Reports";
 
 function TopBar() {
   const { personas, current, setCurrent } = usePersona();
+  const [theme, toggleTheme] = useTheme();
   return (
     <div className="topbar">
       <BrandMark />
@@ -24,6 +40,10 @@ function TopBar() {
         <NavLink to="/reports" className={({ isActive }) => (isActive ? "active" : "")}>Reports</NavLink>
         <NavLink to="/ask" className={({ isActive }) => (isActive ? "active" : "")}>Ask Sentinel</NavLink>
       </nav>
+      <button className="theme-toggle" onClick={toggleTheme}
+        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label="Toggle theme">
+        {theme === "dark" ? "☀" : "☾"}
+      </button>
       <div className="viewas">
         View As:
         <select value={current?.analyst_id || ""}

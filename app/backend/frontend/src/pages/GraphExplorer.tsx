@@ -90,7 +90,7 @@ export function GraphExplorer() {
             <span className="muted" style={{ fontWeight: 400 }}>{data?.node_count ?? 0} nodes · {data?.edge_count ?? 0} edges · drag / scroll to explore</span>
           </h3>
           {loading ? <Loading what="graph" /> : (
-            <div ref={elRef} style={{ width: "100%", height: 560, background: "#fbfcfe", borderRadius: 10 }} />
+            <div ref={elRef} style={{ width: "100%", height: 560, background: "var(--graph-bg)", borderRadius: 10 }} />
           )}
           <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", fontSize: 12 }}>
             {Object.entries(KIND_COLOR).filter(([k]) => k !== "other").map(([k, c]) => (
