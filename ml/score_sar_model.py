@@ -39,8 +39,8 @@ model = mlflow.sklearn.load_model(model_uri)
 pdf = spark.table(f"{CATALOG}.{SCHEMA}.ml_alert_features").toPandas()
 pdf["model_score"] = model.predict_proba(pdf[FEATURES])[:, 1]
 pdf["rules_score"] = (pdf["risk_score"] / 100.0).clip(0, 1)
-# Blend: 70% model + 30% rules, but never below the raw rule score (rules as a floor
-# so a strong hard-rule hit is never fully suppressed by the model).
+# Blend: 70% model + 30% rules, rules as a floor. Same pure helper the app/tests use
+# (server/scoring.py) — vectorised inline here to avoid a per-row Python call.
 blended = 0.70 * pdf["model_score"] + 0.30 * pdf["rules_score"]
 pdf["ai_risk"] = (blended.clip(lower=pdf["rules_score"]) * 100).round(1)
 pdf["model_version"] = str(model_version)

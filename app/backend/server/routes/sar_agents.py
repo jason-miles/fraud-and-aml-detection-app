@@ -186,11 +186,19 @@ def _x(tag: str, val, indent: int = 4) -> str:
 
 
 def build_goaml_xml(case_id: str, narrative: str = "") -> str:
-    """Emit a goAML-format (UN/UNODC standard) SAR XML from case + evidence.
-    Structure follows goAML's report → reporting-person/entity → activity →
-    transaction/involved-parties shape (demo-faithful, not schema-validated)."""
+    """Gather evidence for a case and emit its goAML SAR XML."""
     ev = gather_evidence(case_id)
     if not ev:
+        return "<report/>"
+    return goaml_from_evidence(ev, narrative)
+
+
+def goaml_from_evidence(ev: dict, narrative: str = "") -> str:
+    """Pure: emit a goAML-format (UN/UNODC standard) SAR XML from an evidence dict.
+    Structure follows goAML's report → reporting-person/entity → activity →
+    transaction/involved-parties shape (demo-faithful, not schema-validated).
+    Separated from I/O so it is unit-testable without a warehouse."""
+    if not ev or not ev.get("case"):
         return "<report/>"
     c = ev["case"]
     txns = ev.get("transactions") or []

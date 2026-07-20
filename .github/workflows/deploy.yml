@@ -1,0 +1,57 @@
+name: Deploy
+
+# Auto-deploy the whole bundle (app + pipeline + jobs) on merge to main.
+# Requires repo secrets (Settings → Secrets and variables → Actions):
+#   DATABRICKS_HOST           https://fevm-elexon-app-for-settlement-acc.cloud.databricks.com
+#   DATABRICKS_CLIENT_ID      OAuth service-principal client id (M2M)
+#   DATABRICKS_CLIENT_SECRET  OAuth service-principal secret
+# The service principal needs CAN_MANAGE on the app/pipeline/jobs and the usual UC grants.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build the React UI and stage it where the app ships it (webroot/), so the
+      # deployed app serves the latest bundle.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build frontend -> webroot
+        working-directory: app/backend/frontend
+        run: |
+          npm ci
+          npm run build
+          rm -rf ../webroot
+          cp -r dist ../webroot
+
+      - uses: databricks/setup-cli@main
+      - name: Deploy bundle (app + pipeline + jobs)
+        run: databricks bundle deploy -t prod
