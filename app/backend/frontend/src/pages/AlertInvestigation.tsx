@@ -69,7 +69,7 @@ export function AlertInvestigation() {
       <div className="panel">
         <h3 className="left">Active Alerts</h3>
         <table>
-          <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Risk Score</th><th>Priority</th><th>Amount</th><th>Days</th><th>Action</th></tr></thead>
+          <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Rules Score</th><th>AI Risk</th><th>Priority</th><th>Amount</th><th>Days</th><th>Action</th></tr></thead>
           <tbody>
             {(data.active_alerts || []).map((a: any) => <AlertRow key={a.case_id} a={a} nav={nav} />)}
           </tbody>
@@ -93,7 +93,10 @@ function AlertRow({ a, nav }: { a: any; nav: any }) {
         <td className="mono">{a.alert_num}</td>
         <td>{a.customer_name}</td>
         <td>{a.scenario}</td>
-        <td><span style={{ color: "var(--navy)", fontWeight: 700 }}>{a.risk_score}</span></td>
+        <td><span style={{ color: "var(--muted)", fontWeight: 600 }}>{a.risk_score}</span></td>
+        <td>{a.ai_risk != null
+          ? <span title={`Served model v${a.model_version}`} style={{ color: num(a.ai_risk) >= 80 ? "var(--critical)" : "var(--navy)", fontWeight: 800 }}>{a.ai_risk}<span style={{ fontSize: 10, color: "var(--accent)", marginLeft: 3 }}>✦AI</span></span>
+          : <span className="muted">—</span>}</td>
         <td><Sev s={a.priority} /></td>
         <td style={{ fontWeight: 600 }}>{money(a.amount)}</td>
         <td style={{ color: num(a.days_open) > 90 ? "var(--critical)" : undefined }}>{a.days_open}</td>
@@ -103,7 +106,7 @@ function AlertRow({ a, nav }: { a: any; nav: any }) {
         </td>
       </tr>
       {blurb && (
-        <tr><td colSpan={8} style={{ background: "var(--canvas)", borderLeft: "3px solid var(--accent)" }}>
+        <tr><td colSpan={9} style={{ background: "var(--canvas)", borderLeft: "3px solid var(--accent)" }}>
           <span className="muted" style={{ fontWeight: 700, marginRight: 8 }}>✦ AI</span>{blurb}
         </td></tr>
       )}

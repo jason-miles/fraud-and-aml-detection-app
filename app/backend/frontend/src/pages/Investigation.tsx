@@ -39,7 +39,13 @@ export function Investigation() {
       <p className="page-sub">{c.scenario} · case <span className="mono">{c.case_id}</span> · {c.team_name}</p>
 
       <div className="kpis">
-        <div className="kpi"><div className="label">Risk Score</div><div className="value navy">{c.risk_score}</div></div>
+        <div className="kpi"><div className="label">Rules Score</div><div className="value" style={{ color: "var(--muted)" }}>{c.risk_score}</div></div>
+        <div className="kpi" title={c.model_version ? `Served model v${c.model_version}` : ""}>
+          <div className="label">AI Risk ✦</div>
+          <div className="value" style={{ color: c.ai_risk != null && num(c.ai_risk) >= 80 ? "var(--critical)" : "var(--navy)" }}>
+            {c.ai_risk != null ? c.ai_risk : "—"}
+          </div>
+        </div>
         <div className="kpi"><div className="label">Amount</div><div className="value navy" style={{ fontSize: 22 }}>{money(c.amount)}</div></div>
         <div className="kpi"><div className="label">Days Open</div><div className="value" style={{ color: num(c.days_open) > 90 ? "var(--critical)" : "var(--navy)" }}>{c.days_open}</div></div>
         <div className="kpi"><div className="label">Investigation Hrs</div><div className="value navy">{c.investigation_hours}</div></div>

@@ -81,11 +81,14 @@ FROM {GOLD_SCHEMA}.sherlock_cases WHERE analyst_id = :aid
 GROUP BY date_trunc('WEEK', opened_at), scenario ORDER BY week
 """, p)
     active = fetch_all(f"""
-SELECT case_id, alert_num, customer_name, scenario, risk_score, priority, amount, days_open, status
-FROM {GOLD_SCHEMA}.sherlock_cases
-WHERE analyst_id = :aid AND status <> 'closed'
-ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-         days_open DESC
+SELECT c.case_id, c.alert_num, c.customer_name, c.scenario, c.risk_score, c.priority,
+       c.amount, c.days_open, c.status, s.ai_risk, s.model_version
+FROM {GOLD_SCHEMA}.sherlock_cases c
+LEFT JOIN {GOLD_SCHEMA}.ml_alert_scores s ON s.case_id = c.case_id
+WHERE c.analyst_id = :aid AND c.status <> 'closed'
+ORDER BY coalesce(s.ai_risk, c.risk_score) DESC,
+         CASE c.priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+         c.days_open DESC
 LIMIT 100
 """, p)
     return {"kpis": kpis[0] if kpis else {}, "weekly": weekly, "active_alerts": active}
@@ -96,9 +99,15 @@ def case_detail(case_id: str):
     """Investigation page: case, flagged transactions, entity network, notes, actions."""
     p = [{"name": "cid", "value": case_id}]
     rows = fetch_all(f"""
-SELECT case_id, alert_num, customer_id, customer_name, scenario, priority, status,
-       team_name, analyst_name, risk_score, amount, days_open, due_date, investigation_hours
-FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid
+SELECT c.case_id, c.alert_num, c.customer_id, c.customer_name, c.scenario, c.priority, c.status,
+       c.team_name, c.analyst_name, c.risk_score, c.amount, c.days_open, c.due_date, c.investigation_hours,
+       -- Served-model AI risk (replaces the old ai_query placeholder): the registered
+       -- UC model's SAR probability blended with the rules score. Nullable if the case
+       -- has not been batch-scored yet.
+       s.ai_risk, s.model_score, s.rules_score, s.model_version
+FROM {GOLD_SCHEMA}.sherlock_cases c
+LEFT JOIN {GOLD_SCHEMA}.ml_alert_scores s ON s.case_id = c.case_id
+WHERE c.case_id = :cid
 """, p)
     if not rows:
         return {"detail": "not found"}
