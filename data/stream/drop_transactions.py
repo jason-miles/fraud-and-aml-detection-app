@@ -11,15 +11,21 @@ silver.transactions unions it with the historical batch feed; and the existing
 detectors fire — so a dropped file surfaces a fresh alert in gold.fraud_alerts
 (and the app) within seconds of the next pipeline update.
 
-Two modes:
-  --scenario layering   (default) a planted layering / passthrough ring on one
-                        account: a large inflow immediately followed by a
-                        near-equal outflow within 24h -> trips `rapid_movement`.
-  --scenario normal     benign transactions only (noise; no alert expected).
+Scenarios (each targets the matching streaming lane / detector):
+  --scenario layering            (default) a planted layering / passthrough ring on
+                                 one account: large inflow then near-equal outflow
+                                 within 24h -> trips `rapid_movement`.
+                                 Lane: landing/transactions/.
+  --scenario normal              benign ledger transactions only (noise; no alert).
+                                 Lane: landing/transactions/.
+  --scenario impossible_travel   two card taps for one card far apart in space but
+                                 minutes apart in time (JHB then London) -> trips
+                                 `impossible_travel`. Lane: landing/card_transactions/.
 
 Usage (uses the databricks CLI to upload; requires an authenticated profile):
   python drop_transactions.py --profile fevm-elexon-app-for-settlement-acc
   python drop_transactions.py --scenario normal --count 20 --account ACC00000021
+  python drop_transactions.py --scenario impossible_travel --card CARD00000021 --account ACC00000021
 
 The file is named with a high-resolution timestamp so every drop is a distinct
 new file (Auto Loader ingests each once).
@@ -32,10 +38,16 @@ import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 
-VOLUME_DIR = (
+VOLUME_BASE = (
     "/Volumes/elexon_app_for_settlement_acc_catalog/"
-    "investec_fraud_aml_bronze/landing/transactions"
+    "investec_fraud_aml_bronze/landing"
 )
+# Each scenario feeds the streaming lane whose folder is named here.
+LANE = {
+    "layering": "transactions",
+    "normal": "transactions",
+    "impossible_travel": "card_transactions",
+}
 
 
 def _iso(ts: datetime) -> str:
@@ -109,10 +121,54 @@ def build_normal(account: str, count: int, now: datetime) -> list[dict]:
     return rows
 
 
+def build_impossible_travel(card: str, account: str, now: datetime) -> list[dict]:
+    """Two taps for one card that are geographically impossible in the elapsed time.
+
+    The impossible_travel rule pairs consecutive taps per card via lag() ordered by
+    txn_ts, computes haversine km / elapsed hours, and alerts when implied speed
+    exceeds max_feasible_kmh (900). Johannesburg -> London is ~9,000 km; 30 minutes
+    apart implies ~18,000 km/h — far over threshold.
+    """
+    stamp = now.strftime("%Y%m%d%H%M%S")
+    tap1_ts = now - timedelta(minutes=35)
+    tap2_ts = now - timedelta(minutes=5)
+    return [
+        {
+            "card_txn_id": f"STRM-{stamp}-T1",
+            "card_id": card,
+            "account_id": account,
+            "amount": 1850.0,
+            "currency": "ZAR",
+            "merchant": "Woolworths Sandton",
+            "channel": "contactless",
+            "lat": -26.1076,   # Johannesburg (Sandton)
+            "lon": 28.0567,
+            "city": "Johannesburg",
+            "country": "South Africa",
+            "txn_ts": _iso(tap1_ts),
+        },
+        {
+            "card_txn_id": f"STRM-{stamp}-T2",
+            "card_id": card,
+            "account_id": account,
+            "amount": 240.0,
+            "currency": "ZAR",
+            "merchant": "Harrods London",
+            "channel": "chip",
+            "lat": 51.4994,    # London (Knightsbridge)
+            "lon": -0.1632,
+            "city": "London",
+            "country": "United Kingdom",
+            "txn_ts": _iso(tap2_ts),
+        },
+    ]
+
+
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Drop transaction JSON into the Sentinel landing volume.")
-    ap.add_argument("--scenario", choices=["layering", "normal"], default="layering")
+    ap = argparse.ArgumentParser(description="Drop transaction/card JSON into the Sentinel landing volume.")
+    ap.add_argument("--scenario", choices=["layering", "normal", "impossible_travel"], default="layering")
     ap.add_argument("--account", default="ACC00000011", help="target account_id (must exist in silver.accounts)")
+    ap.add_argument("--card", default="CARD00000021", help="target card_id for --scenario impossible_travel")
     ap.add_argument("--amount", type=float, default=750000.0, help="layering inflow amount (ZAR)")
     ap.add_argument("--count", type=int, default=15, help="row count for --scenario normal")
     ap.add_argument("--profile", default="fevm-elexon-app-for-settlement-acc", help="databricks CLI profile")
@@ -122,6 +178,8 @@ def main() -> None:
     now = datetime.now(timezone.utc)
     if args.scenario == "layering":
         rows = build_layering(args.account, args.amount, now)
+    elif args.scenario == "impossible_travel":
+        rows = build_impossible_travel(args.card, args.account, now)
     else:
         rows = build_normal(args.account, args.count, now)
 
@@ -140,7 +198,7 @@ def main() -> None:
         print(f"(dry-run) local file: {local_path}")
         return
 
-    dest = f"{VOLUME_DIR}/{fname}"
+    dest = f"{VOLUME_BASE}/{LANE[args.scenario]}/{fname}"
     cmd = ["databricks", "fs", "cp", local_path, f"dbfs:{dest}", "--profile", args.profile]
     print("+ " + " ".join(cmd))
     subprocess.run(cmd, check=True)

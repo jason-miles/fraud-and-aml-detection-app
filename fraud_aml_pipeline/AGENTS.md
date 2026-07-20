@@ -30,18 +30,32 @@ repo). This pipeline builds:
 Default catalog/schema: elexon_app_for_settlement_acc_catalog / investec_fraud_aml_gold.
 Silver datasets use fully-qualified names to publish into investec_fraud_aml_silver.
 
-## Streaming lane (transaction hot-path — near-real-time)
+## Streaming lanes (near-real-time hot-path)
 
-New transaction feeds land as JSON in the UC Volume
-`investec_fraud_aml_bronze.landing/transactions/` and are ingested incrementally by
-`bronze/bronze_transactions_stream.sql` (STREAMING TABLE via `read_files` Auto Loader).
-`silver.transactions` UNIONs this streaming table with the historical batch table
-`bronze.transactions`, so streamed txns flow through the existing detectors, app, and
-Genie space with zero downstream changes.
+Two Auto Loader streaming lanes land JSON in the UC Volume
+`investec_fraud_aml_bronze.landing/<lane>/` and ingest incrementally via `read_files`
+STREAMING TABLEs in `transformations/bronze/`:
 
-Demo: `python data/stream/drop_transactions.py --scenario layering` drops a
-layering/passthrough file, then a plain (incremental) pipeline run surfaces a fresh
-`rapid_movement` alert in `gold.fraud_alerts` within seconds. Verified 2026-07-20.
+  * `transactions/`      -> `bronze.transactions_stream`      -> unioned into
+    `silver.transactions`      -> `detect_rapid_movement` / `detect_circular_flow`.
+  * `card_transactions/` -> `bronze.card_transactions_stream` -> unioned into
+    `silver.card_transactions` -> `detect_impossible_travel`.
+
+Each silver MV UNIONs the streaming table with its historical batch table and refs
+the streaming table by published FQN, so Lakeflow builds a real dependency edge (the
+hot-path is correct on a plain incremental run) and streamed events flow through the
+existing detectors, app, and Genie space with zero downstream changes.
+
+Demo instrument `data/stream/drop_transactions.py`:
+  * `--scenario layering`          -> `rapid_movement` alert.
+  * `--scenario impossible_travel` -> `impossible_travel` alert (JHB->London taps).
+  * `--scenario normal`            -> benign noise, no alert.
+Drop a file, then a plain (incremental) pipeline run surfaces the fresh alert in
+`gold.fraud_alerts` within seconds. Both lanes verified end-to-end 2026-07-20.
+
+NOTE: each lane's `landing/<lane>/` folder must exist before `read_files` starts
+(`databricks fs mkdir dbfs:/Volumes/.../landing/<lane>`), and the streaming table
+must be initialized once with `--full-refresh-all` after it is first added.
 
 Deploy: `databricks bundle deploy -t dev --profile fevm-elexon-app-for-settlement-acc`
 Run:    `databricks bundle run fraud_aml_pipeline_etl -t dev --profile fevm-elexon-app-for-settlement-acc`
