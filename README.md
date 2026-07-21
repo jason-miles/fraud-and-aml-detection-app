@@ -27,13 +27,23 @@ sql/
   02_silver/       conform, dedupe, entity resolution (Lakeflow DLP)
   03_gold/         fraud_alerts, entity_network, customer_360, alert_feedback, metric views
   04_detection/    the 8 alert families + impossible-travel (SQL rules)
-  05_intelligence/ adverse media (vector_search + ai_query), PDF processing, Genie glossary
-data/              synthetic data seeder (planted fraud scenarios)
+  05_intelligence/ adverse media (VS + ai_query), ML features/labels, drift monitoring
+  06_governance/   PII column masks, RLS row filter, audit_log, LLM eval, case workflow
+data/              synthetic data seeder; data/stream/ near-real-time file-drop generator
+ml/                SAR-propensity model — train + batch-score (MLflow → UC registry)
 app/
-  backend/         FastAPI (reads gold via Databricks SQL, writes feedback)
-  frontend/        React (6 pages: Alert Queue, Alert Detail, Entity Network, Customer 360, Reports, Impossible-travel map)
-docs/              Managed DR posture, architecture, demo runbook
+  backend/         FastAPI (reads gold via Databricks SQL, writes feedback) + tests/
+  frontend/        React app + e2e/ (Playwright)
+dashboards/        Lakeview AI/BI dashboard (exec overview) JSON
+genie/             Genie space curation (glossary + certified example queries)
+resources/         root-bundle app + retrain-job resources
+docs/              architecture, ci_cd, managed DR posture, demo runbook
+databricks.yml     root bundle unifying app + pipeline + jobs (see NEXT_STEPS #6)
 ```
+
+> **Post-v1 enhancements** (streaming, supervised ML + governance/drift, PII masking +
+> RLS + audit, multi-agent SAR + goAML, dashboard, CI/CD + tests) are summarised in
+> `docs/architecture.md §7` and tracked in `NEXT_STEPS_IMPROVEMENTS.md`.
 
 ## Delivery phases (PRD §12)
 1. **Foundation** — UC schemas, medallion skeleton, synthetic data → bronze, entity resolution in silver.

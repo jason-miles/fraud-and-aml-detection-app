@@ -123,9 +123,47 @@ for local dev.
 ## 6. Repository map
 
 ```
-sql/                 versioned DDL/logic (foundation, silver, gold, intelligence, sherlock)
-data/                synthetic data seeder + planted fraud scenarios
-fraud_aml_pipeline/  Lakeflow Declarative Pipeline bundle (deployed)
-app/backend/         FastAPI + React (Investec Sentinel Databricks App)
-docs/                architecture · managed_dr_posture · demo_runbook · App Screenshots
+sql/                 versioned DDL/logic (foundation, silver, gold, intelligence, governance)
+data/                synthetic data seeder + planted fraud scenarios; data/stream/ file-drop generator
+fraud_aml_pipeline/  Lakeflow Declarative Pipeline bundle (deployed) + jobs
+ml/                  SAR-propensity model: train + batch-score scripts (MLflow → UC registry)
+app/backend/         FastAPI + React (Investec Sentinel Databricks App) + tests/ + frontend/e2e/
+dashboards/          Lakeview AI/BI dashboard JSON (exec overview)
+genie/               Genie space curation (glossary + certified queries)
+resources/           root-bundle app + retrain-job resources; databricks.yml unifies deploy
+.github/workflows/   CI (pytest + build + bundle validate) + deploy on merge
+docs/                architecture · ci_cd · managed_dr_posture · demo_runbook · App Screenshots
 ```
+
+## 7. Platform enhancements (post-v1)
+
+Delivered on top of the v1 baseline (each is deployed & verified; see BUILD_LOG / git):
+
+- **Streaming ingestion (near-real-time).** Auto Loader STREAMING TABLEs
+  `bronze.transactions_stream` + `bronze.card_transactions_stream` from a UC Volume
+  landing zone, UNIONed into the batch silver so detectors/app/Genie see streamed
+  events unchanged. A file-arrival **triggered job** (`fraud_aml_stream_trigger`)
+  makes it self-driving: drop a file → alert surfaces in ~2 min, no manual run.
+  Instrument: `data/stream/drop_transactions.py` (layering / impossible_travel).
+- **Supervised ML detection.** GBT SAR-propensity model (`ml/`) trained via MLflow,
+  registered to the **UC Model Registry**, batch-scored into `gold.ml_alert_scores`
+  (model/rules blend → the app's "AI Risk"). Governance surface in the Compliance
+  tab: validation metrics + **15.8% fewer false positives** at equal alert budget,
+  **feature-drift monitoring** (`ml_feature_baseline`/`ml_drift_metrics`), and a
+  weekly retrain job. Feature/label + drift SQL in `sql/05_intelligence/`.
+- **Bank-grade governance** (`sql/06_governance/`): UC **column masks** on PII
+  (masked-by-default), a **row filter** for team entitlement, an immutable
+  **audit_log** (case reads/decisions/SAR actions), and an **LLM eval + guardrail**
+  record for the SAR GenAI surface. Lakeflow **data-quality expectations** on every
+  medallion dataset.
+- **Multi-agent SAR + goAML.** Supervisor over specialist agents with an
+  auto-gathered evidence pack (incl. **vector-search adverse media**); goAML-format
+  **STR XML** output with structural validation; a **four-eyes** approval gate and a
+  case **state machine** (`server/casestate.py`). See `server/routes/sar_agents.py`,
+  `sar_eval.py`.
+- **App/UX.** Cytoscape Graph Explorer, dark mode, live-refreshing queue + exec,
+  server-side queue filtering, embedded AI/BI dashboard (Reports), an accessibility
+  pass, SLA tracking + reassignment.
+- **CI/CD & tests.** pytest (backend, mocked DB) + Playwright e2e; GitHub Actions;
+  a root `databricks.yml` consolidating app + pipeline + jobs (migration pending —
+  see NEXT_STEPS #6).
