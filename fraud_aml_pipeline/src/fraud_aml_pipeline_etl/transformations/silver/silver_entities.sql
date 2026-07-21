@@ -2,7 +2,12 @@
 -- parties to a stable entity_id via deterministic keys (national_id / tax_number)
 -- with a fuzzy fallback (soundex(name)+city). Cluster size > 1 => a resolved
 -- customer<->third-party match (same beneficial owner).
-CREATE OR REFRESH MATERIALIZED VIEW elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.entities AS
+CREATE OR REFRESH MATERIALIZED VIEW elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.entities (
+  -- WARN: the resolved entity_id + its source_id are the backbone of every
+  -- entity-keyed join; record the DQ metric without dropping (this MV IS the ER key).
+  CONSTRAINT valid_entity_id EXPECT (entity_id IS NOT NULL),
+  CONSTRAINT valid_source_id EXPECT (source_id IS NOT NULL)
+) AS
 WITH parties_raw AS (
   SELECT customer_id AS source_id, 'customer' AS party_type,
          full_name, national_id, tax_number, city, country, dob

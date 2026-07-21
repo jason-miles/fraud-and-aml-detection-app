@@ -12,7 +12,10 @@
 -- The impossible-travel detector, app, and Genie space read this table by name, so
 -- streamed taps flow through to alerts with zero downstream changes.
 CREATE OR REFRESH MATERIALIZED VIEW
-  elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.card_transactions AS
+  elexon_app_for_settlement_acc_catalog.investec_fraud_aml_silver.card_transactions (
+  CONSTRAINT valid_card_txn_id EXPECT (card_txn_id IS NOT NULL) ON VIOLATION DROP ROW,
+  CONSTRAINT valid_amount      EXPECT (amount IS NOT NULL AND amount >= 0)
+) AS
 SELECT * EXCEPT (rn) FROM (
   SELECT *, row_number() OVER (PARTITION BY card_txn_id ORDER BY _ingested_at DESC) rn
   FROM (
