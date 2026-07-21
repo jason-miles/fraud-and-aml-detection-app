@@ -75,12 +75,12 @@ export function GraphExplorer() {
     <>
       <h1 className="page-title">Graph Explorer</h1>
       <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-        <input style={{ flex: 1 }} placeholder="Search the knowledge graph with natural language…"
+        <input aria-label="Search the knowledge graph" style={{ flex: 1 }} placeholder="Search the knowledge graph with natural language…"
           value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && run(q)} />
         <button className="btn" onClick={() => run(q)}>Search</button>
       </div>
       <div style={{ marginBottom: 16 }}>
-        {CHIPS.map((c) => <span key={c} className="chip" onClick={() => { setQ(c); run(c); }}>{c}</span>)}
+        {CHIPS.map((c) => <button key={c} type="button" className="chip" onClick={() => { setQ(c); run(c); }}>{c}</button>)}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 18 }}>

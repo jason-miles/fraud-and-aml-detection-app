@@ -46,7 +46,7 @@ function TopBar() {
       </button>
       <div className="viewas">
         View As:
-        <select value={current?.analyst_id || ""}
+        <select aria-label="View as analyst persona" value={current?.analyst_id || ""}
           onChange={(e) => { const p = personas.find((x) => x.analyst_id === e.target.value); if (p) setCurrent(p); }}>
           {personas.map((p) => (
             <option key={p.analyst_id} value={p.analyst_id}>{p.analyst_name} ({p.team_name})</option>
@@ -62,8 +62,9 @@ function Shell() {
   if (loc.pathname === "/") return <Landing />;
   return (
     <>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <TopBar />
-      <div className="page">
+      <main id="main-content" className="page">
         <Routes>
           <Route path="/exec" element={<ExecutiveOverview />} />
           <Route path="/investigation" element={<AlertInvestigation />} />
@@ -74,7 +75,7 @@ function Shell() {
           <Route path="/compliance" element={<Compliance />} />
           <Route path="/reports" element={<Reports />} />
         </Routes>
-      </div>
+      </main>
     </>
   );
 }

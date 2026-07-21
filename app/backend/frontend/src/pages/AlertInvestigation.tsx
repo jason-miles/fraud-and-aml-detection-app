@@ -96,14 +96,14 @@ export function AlertInvestigation() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <h3 className="left" style={{ margin: 0 }}>Active Alerts {(fPriority || fScenario) ? `(${(data.active_alerts || []).length} filtered)` : ""}</h3>
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
-            <select value={fPriority} onChange={(e) => setFPriority(e.target.value)}>
+            <select aria-label="Filter by priority" value={fPriority} onChange={(e) => setFPriority(e.target.value)}>
               <option value="">All priorities</option>
               <option value="critical">Critical</option>
               <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
-            <select value={fScenario} onChange={(e) => setFScenario(e.target.value)}>
+            <select aria-label="Filter by scenario" value={fScenario} onChange={(e) => setFScenario(e.target.value)}>
               <option value="">All scenarios</option>
               {Object.keys(SCEN_COLORS).map((s) => <option key={s} value={s}>{s}</option>)}
             </select>

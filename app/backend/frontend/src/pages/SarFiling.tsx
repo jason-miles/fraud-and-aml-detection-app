@@ -107,7 +107,7 @@ export function SarFiling() {
 
       <div className="panel">
         <h3 className="left">SAR Narrative <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(supervisor-synthesised, editable)</span></h3>
-        <textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} style={{ width: "100%", minHeight: 240, lineHeight: 1.6 }} />
+        <textarea aria-label="SAR narrative" value={narrative} onChange={(e) => setNarrative(e.target.value)} style={{ width: "100%", minHeight: 240, lineHeight: 1.6 }} />
         <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
           <button className="btn ghost" onClick={run} disabled={busy}>{busy ? "Re-running agents…" : "↻ Re-run agents"}</button>
           <a className="btn ghost" href={goamlUrl(caseId!, narrative)} download>⤓ Download goAML XML</a>
@@ -124,7 +124,7 @@ export function SarFiling() {
         </div>
         <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span className="k" style={{ fontWeight: 600 }}>Four-eyes approver</span>
-          <input value={approver} onChange={(e) => setApprover(e.target.value)}
+          <input aria-label="Four-eyes approver name" value={approver} onChange={(e) => setApprover(e.target.value)}
             placeholder="second approver (must differ from filer)" style={{ minWidth: 280 }} />
           <span className="muted" style={{ fontSize: 12 }}>
             Filing requires a second, distinct approver — {current?.analyst_name} is the filer.

@@ -25,7 +25,7 @@ export function Landing() {
             <li>Team performance analytics</li>
             <li>SAR conversion tracking</li>
           </ul>
-          <a className="cta" onClick={() => nav("/exec")}>Enter Executive View →</a>
+          <button type="button" className="cta" onClick={() => nav("/exec")}>Enter Executive View →</button>
         </div>
 
         <div className="entry hl">
@@ -39,7 +39,7 @@ export function Landing() {
             <li>AI investigation assistant</li>
             <li>One-click SAR generation</li>
           </ul>
-          <a className="cta" onClick={() => nav("/investigation")}>Enter Investigation View →</a>
+          <button type="button" className="cta" onClick={() => nav("/investigation")}>Enter Investigation View →</button>
         </div>
       </div>
 

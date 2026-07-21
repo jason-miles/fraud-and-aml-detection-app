@@ -57,6 +57,11 @@ body {
   font-size: 14px; -webkit-font-smoothing: antialiased; letter-spacing: .005em;
 }
 a { color: inherit; text-decoration: none; }
+/* Accessibility: visible keyboard focus + skip-to-content link */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: var(--navy); color: #fff;
+  padding: 10px 16px; border-radius: 0 0 4px 0; }
+.skip-link:focus { left: 0; }
 h1,h2,h3 { font-family: "Libre Caslon Text", Georgia, serif; color: var(--navy); font-weight: 400; letter-spacing: 0; }
 
 /* ── Top bar ─────────────────────────────────────────────── */
@@ -134,7 +139,7 @@ tr.clickable:hover { background: var(--canvas); cursor: pointer; }
 .btn.ghost:hover { background: var(--canvas); }
 .btn.danger { background: var(--critical); } .btn.warn { background: var(--high); }
 .btn:disabled { opacity: .45; cursor: default; }
-.chip { display:inline-block; padding: 7px 15px; border:1px solid var(--border); border-radius: 2px; margin: 0 8px 8px 0; font-size:12px; color: var(--muted); cursor: pointer; background: var(--bg); }
+.chip { display:inline-block; padding: 7px 15px; border:1px solid var(--border); border-radius: 2px; margin: 0 8px 8px 0; font-size:12px; font-family: inherit; color: var(--muted); cursor: pointer; background: var(--bg); text-align: left; }
 .chip:hover { border-color: var(--navy); color: var(--navy); }
 
 .kv { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
@@ -190,7 +195,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
 .entry ul { list-style: none; padding: 0; margin: 22px 0 30px; }
 .entry li { padding: 9px 0; color: var(--text); border-bottom: 1px solid var(--border); font-size: 16px; }
 .entry li::before { content: "— "; color: var(--accent); font-weight: 700; }
-.entry .cta { display: block; text-align: center; padding: 14px; border-radius: var(--radius); color: #fff; font-weight: 600; background: var(--navy); cursor: pointer; transition: background .15s; }
+.entry .cta { display: block; width: 100%; border: none; font-family: inherit; font-size: inherit; text-align: center; padding: 14px; border-radius: var(--radius); color: #fff; font-weight: 600; background: var(--navy); cursor: pointer; transition: background .15s; }
 .entry .cta:hover { background: var(--navy-2); }
 .footer-band { display: flex; gap: 64px; margin-top: 48px; background: var(--navy); border-radius: var(--radius); padding: 22px 46px; }
 .footer-band .f { text-align: center; } .footer-band .f .l { color: #a7adbd; font-size: 12px; } .footer-band .f .v { font-family: "Libre Caslon Text", Georgia, serif; color: #fff; font-size: 16px; }

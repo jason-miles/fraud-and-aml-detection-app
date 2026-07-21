@@ -93,7 +93,7 @@ export function Investigation() {
           </div>
           <div className="panel">
             <h3 className="left">Case Notes</h3>
-            <textarea placeholder="Add investigation note…" value={note} onChange={(e) => setNote(e.target.value)} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+            <textarea aria-label="Add investigation note" placeholder="Add investigation note…" value={note} onChange={(e) => setNote(e.target.value)} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
             <button className="btn sm" onClick={saveNote}>Add Note</button>
             <div style={{ marginTop: 12 }}>
               {(c.notes || []).map((n: any, i: number) => (
@@ -186,7 +186,7 @@ function AgentPanel({ caseId }: { caseId: string }) {
         {busy && <div className="msg ai"><div className="who">{agent} agent</div>Analyzing…</div>}
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <input style={{ flex: 1 }} placeholder="Ask for guidance…" value={q}
+        <input aria-label="Ask the AI agent for guidance" style={{ flex: 1 }} placeholder="Ask for guidance…" value={q}
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ask()} />
         <button className="btn sm" onClick={ask} disabled={busy}>Ask</button>
       </div>
