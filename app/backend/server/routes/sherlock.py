@@ -82,9 +82,16 @@ FROM {GOLD_SCHEMA}.sherlock_team_performance ORDER BY cases DESC
 
 
 # ─────────────────────── Alert Investigation ─────────────────────────────
+_PRIORITIES = {"critical", "high", "medium", "low"}
+
+
 @router.get("/queue/{analyst_id}")
-def my_queue(analyst_id: str):
-    """Per-analyst queue KPIs + weekly scenario breakdown + active alerts."""
+def my_queue(analyst_id: str, priority: Optional[str] = None, scenario: Optional[str] = None):
+    """Per-analyst queue KPIs + weekly scenario breakdown + active alerts.
+
+    Optional server-side filters on the active-alerts list: `priority` (validated
+    against the known set) and `scenario` (bound as a parameter — free text but never
+    interpolated). KPIs/weekly stay unfiltered so the headline numbers are stable."""
     p = [{"name": "aid", "value": analyst_id}]
     kpis = fetch_all(f"""
 SELECT
@@ -99,17 +106,25 @@ SELECT date_trunc('WEEK', opened_at) AS week, scenario, count(*) AS alerts
 FROM {GOLD_SCHEMA}.sherlock_cases WHERE analyst_id = :aid
 GROUP BY date_trunc('WEEK', opened_at), scenario ORDER BY week
 """, p)
+    filt = ""
+    ap = list(p)
+    if priority and priority.lower() in _PRIORITIES:
+        filt += " AND c.priority = :prio"
+        ap.append({"name": "prio", "value": priority.lower()})
+    if scenario:
+        filt += " AND c.scenario = :scen"
+        ap.append({"name": "scen", "value": scenario})
     active = fetch_all(f"""
 SELECT c.case_id, c.alert_num, c.customer_name, c.scenario, c.risk_score, c.priority,
        c.amount, c.days_open, c.status, s.ai_risk, s.model_version
 FROM {GOLD_SCHEMA}.sherlock_cases c
 LEFT JOIN {GOLD_SCHEMA}.ml_alert_scores s ON s.case_id = c.case_id
-WHERE c.analyst_id = :aid AND c.status <> 'closed'
+WHERE c.analyst_id = :aid AND c.status <> 'closed'{filt}
 ORDER BY coalesce(s.ai_risk, c.risk_score) DESC,
          CASE c.priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
          c.days_open DESC
 LIMIT 100
-""", p)
+""", ap)
     # Enrich each active case with its SLA status (priority-driven target vs days_open).
     for a in active:
         a["sla"] = sla_status(a.get("priority"), a.get("days_open"))

@@ -28,7 +28,13 @@ export const getPriorityStatus = () => apiGet(`${S}/exec/priority-status`);
 export const getResolutionFlow = () => apiGet(`${S}/exec/resolution-flow`);
 export const getTeamPerformance = () => apiGet(`${S}/exec/team-performance`);
 // Investigation
-export const getQueue = (analystId: string) => apiGet(`${S}/queue/${encodeURIComponent(analystId)}`);
+export const getQueue = (analystId: string, priority = "", scenario = "") => {
+  const qs = new URLSearchParams();
+  if (priority) qs.set("priority", priority);
+  if (scenario) qs.set("scenario", scenario);
+  const s = qs.toString();
+  return apiGet(`${S}/queue/${encodeURIComponent(analystId)}${s ? `?${s}` : ""}`);
+};
 export const getCase = (caseId: string, actor = "") =>
   apiGet(`${S}/case/${encodeURIComponent(caseId)}${actor ? `?actor=${encodeURIComponent(actor)}` : ""}`);
 export const addNote = (b: any) => apiPost(`${S}/case/note`, b);

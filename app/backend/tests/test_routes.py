@@ -53,3 +53,34 @@ def test_healthz(client):
     # SPA fallthrough should serve something for an unknown non-api path,
     # while an unknown /api path should 404.
     assert client.get("/api/does-not-exist").status_code == 404
+
+
+def test_queue_filters_bind_safely(monkeypatch):
+    """Queue filters must be parameter-bound; invalid priority is ignored."""
+    calls = []
+
+    def capture(sql, params=None):
+        calls.append((sql, params or []))
+        return []  # KPIs/weekly/active all empty is fine for wiring
+
+    import server.routes.sherlock as sh
+    monkeypatch.setattr(sh, "fetch_all", capture)
+    c = TestClient(app_module.app)
+
+    # Valid priority + scenario → both bound as params on the active query.
+    c.get("/api/sherlock/queue/AN_SARAH?priority=critical&scenario=Rapid%20Fund%20Movement")
+    active = [(s, p) for s, p in calls if "sherlock_cases c" in s and "status <> 'closed'" in s]
+    assert active, "active-alerts query not found"
+    sql, params = active[-1]
+    names = {x["name"]: x["value"] for x in params}
+    assert names.get("prio") == "critical"
+    assert names.get("scen") == "Rapid Fund Movement"
+    assert ":prio" in sql and ":scen" in sql  # bound, not interpolated
+
+    # Invalid priority → filter omitted (no prio param, no clause).
+    calls.clear()
+    c.get("/api/sherlock/queue/AN_SARAH?priority=DROP%20TABLE")
+    active = [(s, p) for s, p in calls if "sherlock_cases c" in s and "status <> 'closed'" in s]
+    sql, params = active[-1]
+    assert all(x["name"] != "prio" for x in params)
+    assert ":prio" not in sql

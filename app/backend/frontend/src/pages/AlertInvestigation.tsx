@@ -23,22 +23,24 @@ export function AlertInvestigation() {
   const [live, setLive] = useState(true);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [, setTick] = useState(0); // ticks so the "updated Ns ago" label stays fresh
+  const [fPriority, setFPriority] = useState("");
+  const [fScenario, setFScenario] = useState("");
 
-  // Initial load (with spinner) whenever the persona changes.
+  // Initial load (with spinner) whenever persona or filters change.
   useEffect(() => {
     if (!current) return;
     setLoading(true);
-    getQueue(current.analyst_id).then((d) => { setData(d); setUpdatedAt(Date.now()); setLoading(false); }).catch(() => setLoading(false));
-  }, [current]);
+    getQueue(current.analyst_id, fPriority, fScenario).then((d) => { setData(d); setUpdatedAt(Date.now()); setLoading(false); }).catch(() => setLoading(false));
+  }, [current, fPriority, fScenario]);
 
-  // Live polling — silent refresh (no spinner), pausable.
+  // Live polling — silent refresh (no spinner), pausable. Respects active filters.
   useEffect(() => {
     if (!current || !live) return;
     const id = setInterval(() => {
-      getQueue(current.analyst_id).then((d) => { setData(d); setUpdatedAt(Date.now()); }).catch(() => {});
+      getQueue(current.analyst_id, fPriority, fScenario).then((d) => { setData(d); setUpdatedAt(Date.now()); }).catch(() => {});
     }, REFRESH_MS);
     return () => clearInterval(id);
-  }, [current, live]);
+  }, [current, live, fPriority, fScenario]);
 
   // Keep the "updated Ns ago" label fresh between refreshes.
   useEffect(() => {
@@ -91,7 +93,23 @@ export function AlertInvestigation() {
       </div>
 
       <div className="panel">
-        <h3 className="left">Active Alerts</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <h3 className="left" style={{ margin: 0 }}>Active Alerts {(fPriority || fScenario) ? `(${(data.active_alerts || []).length} filtered)` : ""}</h3>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
+            <select value={fPriority} onChange={(e) => setFPriority(e.target.value)}>
+              <option value="">All priorities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select value={fScenario} onChange={(e) => setFScenario(e.target.value)}>
+              <option value="">All scenarios</option>
+              {Object.keys(SCEN_COLORS).map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {(fPriority || fScenario) && <button className="btn sm ghost" onClick={() => { setFPriority(""); setFScenario(""); }}>Clear</button>}
+          </div>
+        </div>
         <table>
           <thead><tr><th>Alert ID</th><th>Customer</th><th>Scenario</th><th>Rules Score</th><th>AI Risk</th><th>Priority</th><th>Amount</th><th>Days</th><th>SLA</th><th>Action</th></tr></thead>
           <tbody>
