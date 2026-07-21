@@ -146,6 +146,33 @@ natively. Surfaced in a new **Compliance** view (3 tabs).
 
 ---
 
+## Phase 6 — Platform enhancements (post-v1, 2026-07-20 → 07-21)
+
+Delivered on top of the v1 baseline; all deployed & verified, pushed to `origin/main`.
+Each bullet lists the artifact so it can be rebuilt. (Roadmap refs → `NEXT_STEPS_IMPROVEMENTS.md`; architecture → `architecture.md §7`.)
+
+**#1 Streaming ingestion (near-real-time).**
+- Auto Loader STREAMING TABLEs `bronze.transactions_stream` + `bronze.card_transactions_stream` from UC Volume `bronze.landing/{transactions,card_transactions}/`, UNIONed into batch silver (FQN ref → real dep edge; plain incremental run works). Files: `fraud_aml_pipeline/.../transformations/bronze/*`.
+- Self-driving `fraud_aml_stream_trigger` job (file-arrival, incremental). Instrument: `data/stream/drop_transactions.py` (`--scenario layering|impossible_travel|normal`).
+- Verified: drop file → `rapid_movement` (0.97) / `impossible_travel` (18,120 km/h) alerts.
+
+**#2 Supervised ML detection.**
+- GBT SAR-propensity model (`ml/train_sar_model.py`) via MLflow → UC Model Registry `...gold.sar_propensity_gbt`. Serverless dep gotcha fixed (typing_extensions path-shadow; mlflow-skinny; cloudpickle). Batch-scored (`ml/score_sar_model.py`) → `gold.ml_alert_scores` (0.70 model / 0.30 rules blend, rules floor → app "AI Risk").
+- **15.8% fewer false positives** at equal alert budget. Feature/label + drift SQL: `sql/05_intelligence/05_ml_features_labels.sql`, `06_ml_drift_monitoring.sql`. Weekly retrain job `resources/fraud_ml_retrain.job.yml`.
+
+**#3 Security & audit** (`sql/06_governance/`).
+- PII column masks (email/phone/dob/addr, masked-by-default, `aml_pii_reviewers` unmask) — ER keys left unmasked by design. RLS row filter `rls_case_team` on `sherlock_cases`. Immutable `gold.audit_log` (case reads/decisions/SAR). *(OBO auth deferred — single-SP.)*
+
+**#4 Multi-agent SAR + goAML** (`server/routes/sar_agents.py`, `sar_eval.py`, `casestate.py`).
+- Supervisor + 3 specialist agents over an auto-gathered evidence pack (incl. VS adverse media). goAML STR **XML** + 12-check structural validator. **Four-eyes** SAR approval + case **state machine**. LLM eval + guardrail record → `gold.llm_eval_results`.
+
+**#5 Bundle + CI/CD + tests.**
+- Root `databricks.yml` (bundle `investec_sentinel`) unifying app+pipeline+jobs (migration pending — #6). `.github/workflows/` (ci + deploy; parked on `ci-workflows` branch — see `ci_cd.md`). Tests: **32 pytest** (`app/backend/tests/`) + **6 Playwright e2e** (`frontend/e2e/`). Lakeflow **DQ expectations on every dataset**.
+
+**#6 App/UX.** Cytoscape Graph Explorer; dark mode; live-refresh queue + exec; server-side queue filtering; embedded Lakeview dashboard (Reports); accessibility pass; SLA tracking + reassignment.
+
+**#8 Genie/GenAI.** Genie space curation (glossary + certified queries, `genie/`); grounded SAR via vector search; LLM eval/guardrails (see #4).
+
 ## Key IDs & resources
 
 | Resource | Value |
@@ -156,8 +183,13 @@ natively. Surfaced in a new **Compliance** view (3 tabs).
 | App service principal | `982e92ba-63ff-4de6-95ff-2bea54a734bd` |
 | Genie space | `01f183691e8f14f18ae80b78b6ffae8b` ("Fraud & AML Analyst", 8 tables) |
 | Setup warehouse | `dcb1c3dd8d1570d6` (Serverless Starter) |
-| App warehouse | `d0305022e6c3db8e` (elexon-anamoly-app) |
+| App warehouse | `d0305022e6c3db8e` (elexon-anamoly-app; Large, 1–3 clusters, 45m auto-stop) |
 | Vector Search index | `...gold.adverse_media_index` on `valterra-vs-endpoint` |
+| UC model | `...gold.sar_propensity_gbt` (v2, MLflow/UC registry) |
+| AI/BI dashboard | `01f1843c859f1acb97f76971d642826c` ("Investec Sentinel — Executive Overview") |
+| Landing volume | `...investec_fraud_aml_bronze.landing/{transactions,card_transactions}/` |
+| Jobs | `fraud_aml_daily_report`, `fraud_aml_stream_trigger` (file-arrival), `fraud_ml_retrain` (weekly) |
+| New gold tables | `ml_alert_features/_sar_labels/_alert_scores/_model_metrics/_feature_baseline/_drift_metrics`, `audit_log`, `llm_eval_results` |
 | CLI/OAuth profile | `fevm-elexon-app-for-settlement-acc` |
 
 ## How to rebuild in a fresh Databricks account
