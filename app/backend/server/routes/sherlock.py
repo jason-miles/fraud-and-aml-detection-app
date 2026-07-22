@@ -416,20 +416,30 @@ LIMIT {int(limit)}
 
     matched = []
     for s in seed:
-        cid = s["customer_id"]
-        add_node(cid, s["full_name"], "customer", s.get("risk"))
+        add_node(s["customer_id"], s["full_name"], "customer", s.get("risk"))
         matched.append({"name": s["full_name"], "kind": "CUSTOMER",
                         "detail": f"Customer: {s['full_name']} | {s.get('city') or ''} {s.get('country') or ''}",
                         "score": s.get("risk")})
-        # accounts + counterparties
-        rel = fetch_all(f"""
-SELECT a.account_id, t.counterparty_id, tp.full_name AS cp_name
-FROM {SILVER_SCHEMA}.accounts a
-LEFT JOIN {SILVER_SCHEMA}.transactions t ON t.account_id = a.account_id
-LEFT JOIN {SILVER_SCHEMA}.third_parties tp ON tp.third_party_id = t.counterparty_id
-WHERE a.customer_id = :cid LIMIT 12
-""", [{"name": "cid", "value": cid}])
-        for r in rel:
+
+    # Single query for ALL seed customers' accounts + counterparties (avoids the old
+    # N+1: one warehouse round-trip instead of one per customer). Capped per customer
+    # via row_number so the graph stays legible.
+    seed_ids = [s["customer_id"] for s in seed]
+    if seed_ids:
+        binds = [{"name": f"c{i}", "value": cid} for i, cid in enumerate(seed_ids)]
+        in_list = ", ".join(f":c{i}" for i in range(len(seed_ids)))
+        rels = fetch_all(f"""
+SELECT customer_id, account_id, counterparty_id, cp_name FROM (
+  SELECT a.customer_id, a.account_id, t.counterparty_id, tp.full_name AS cp_name,
+         row_number() OVER (PARTITION BY a.customer_id ORDER BY a.account_id, t.counterparty_id) AS rn
+  FROM {SILVER_SCHEMA}.accounts a
+  LEFT JOIN {SILVER_SCHEMA}.transactions t ON t.account_id = a.account_id
+  LEFT JOIN {SILVER_SCHEMA}.third_parties tp ON tp.third_party_id = t.counterparty_id
+  WHERE a.customer_id IN ({in_list})
+) WHERE rn <= 12
+""", binds)
+        for r in rels:
+            cid = r["customer_id"]
             if r.get("account_id"):
                 aid = f"ACCT:{r['account_id']}"
                 add_node(aid, r["account_id"], "account")
