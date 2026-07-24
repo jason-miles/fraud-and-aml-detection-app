@@ -1,4 +1,4 @@
-"""GenAI capabilities for Investec Sentinel:
+"""GenAI capabilities for Nedbank Sentinel:
 - Genie 'Ask Sentinel' (NL -> governed SQL) via the Genie Conversation API
 - Executive AI briefing (ai_query over KPIs)
 - Per-case AI risk triage (rescore + recommended action)

@@ -1,4 +1,4 @@
-"""Dual-mode auth + workspace client for the Investec Fraud & AML app.
+"""Dual-mode auth + workspace client for the Nedbank Fraud & AML app.
 
 Follows the Valterra pattern: WorkspaceClient uses auto-injected service-principal
 credentials when running as a Databricks App, and a local CLI profile otherwise.

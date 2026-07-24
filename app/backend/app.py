@@ -1,4 +1,4 @@
-"""Investec Fraud & AML — FastAPI application entry point.
+"""Nedbank Fraud & AML — FastAPI application entry point.
 
 Serves the built React frontend (frontend/dist) and the /api routes as a single
 process (Databricks Apps binds one port; single-process avoids CORS).

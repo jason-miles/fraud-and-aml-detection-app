@@ -11,8 +11,8 @@ const CHIPS = [
   "counterparties in high risk jurisdictions",
 ];
 const KIND_COLOR: Record<string, string> = {
-  customer: "#30384a", alert: "#b42318", account: "#8aa0b6",
-  counterparty: "#c9a24b", watchlist: "#7a1f1f", other: "#aeb6c4",
+  customer: "#006341", alert: "#b42318", account: "#7fae97",
+  counterparty: "#044a33", watchlist: "#7a1f1f", other: "#aecabb",
 };
 
 export function GraphExplorer() {
