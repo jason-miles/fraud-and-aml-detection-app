@@ -54,8 +54,8 @@ def retrieve_adverse_media(query: str, k: int = 3) -> list:
 
 # Reporting-entity constants for the goAML header (the filing institution).
 RE = {
-    "id": "INVESTEC-ZA",
-    "name": "Investec Bank Limited",
+    "id": "NEDBANK-ZA",
+    "name": "Nedbank Limited",
     "type": "BANK",
     "country": "ZA",
     "contact": "Financial Crime Intelligence Unit",

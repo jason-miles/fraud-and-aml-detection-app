@@ -1,19 +1,19 @@
-/* Investec Sentinel — design system modelled on investec.com
-   (Inter body + Libre Caslon Text serif headings, slate-navy #30384a,
+/* Nedbank Sentinel — design system modelled on nedbank.co.za
+   (Inter body + Libre Caslon Text serif headings, signature green #006341,
    white canvas, near-square corners, restrained accents). */
 :root {
-  --navy: #30384a;         /* Investec signature slate-navy */
-  --navy-2: #262d3c;
+  --navy: #044a33;         /* Nedbank deep green (headings/primary) */
+  --navy-2: #013525;
   --bg: #ffffff;
-  --canvas: #f6f6f4;       /* warm off-white sections */
+  --canvas: #f4f7f5;       /* cool off-white sections */
   --panel: #ffffff;
-  --panel-2: #f6f6f4;
-  --border: #e4e4de;
-  --text: #30384a;
-  --muted: #6a7183;
-  --accent: #c9a24b;       /* restrained gold accent (private-bank) */
-  --accent-2: #8aa0b6;
-  --link: #30384a;
+  --panel-2: #f4f7f5;
+  --border: #dde7e1;
+  --text: #143a2c;
+  --muted: #5f7369;
+  --accent: #006341;       /* Nedbank signature green */
+  --accent-2: #7fae97;
+  --link: #006341;
   --critical: #b42318;
   --high: #b54708;
   --medium: #a16207;
@@ -25,21 +25,21 @@
   --radius: 3px;
   --graph-bg: #fbfcfe;
 }
-/* Dark theme — same variable contract, flipped surfaces. Gold accent retained;
-   severity colours brightened for contrast on dark. */
+/* Dark theme — same variable contract, flipped surfaces. Green accent
+   brightened for contrast on dark; severity colours brightened too. */
 :root[data-theme="dark"] {
-  --navy: #e8ecf3;          /* headings/text invert to light on dark */
-  --navy-2: #cbd3e0;
-  --bg: #171b24;
-  --canvas: #1e232e;
-  --panel: #1e232e;
-  --panel-2: #262d3a;
-  --border: #333a48;
-  --text: #dce1ea;
-  --muted: #98a1b3;
-  --accent: #d8b45e;
-  --accent-2: #8aa0b6;
-  --link: #d8b45e;
+  --navy: #e6efe9;          /* headings/text invert to light on dark */
+  --navy-2: #c6d6cd;
+  --bg: #131a16;
+  --canvas: #1a231e;
+  --panel: #1a231e;
+  --panel-2: #223029;
+  --border: #2f3f37;
+  --text: #dbe6df;
+  --muted: #93a89c;
+  --accent: #3fae7e;
+  --accent-2: #7fae97;
+  --link: #3fae7e;
   --critical: #f0736a;
   --high: #e0975a;
   --medium: #d7b45a;
@@ -154,19 +154,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
 .landing { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
 /* Spectacular hero logo lockup */
 .hero-logo { position: relative; margin-bottom: 40px; padding: 28px 48px; border-radius: 6px;
-  background: linear-gradient(135deg, #262d3c 0%, #30384a 55%, #3b4557 100%);
-  border: 1px solid rgba(201,162,75,.45);
-  box-shadow: 0 20px 60px rgba(48,56,74,.28), inset 0 1px 0 rgba(255,255,255,.05);
+  background: linear-gradient(135deg, #013525 0%, #044a33 55%, #06623f 100%);
+  border: 1px solid rgba(63,174,126,.45);
+  box-shadow: 0 20px 60px rgba(1,53,37,.30), inset 0 1px 0 rgba(255,255,255,.05);
   overflow: hidden; text-align: center; }
 .hero-glow { position: absolute; top: -60%; left: 50%; transform: translateX(-50%);
   width: 480px; height: 480px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(201,162,75,.22) 0%, rgba(201,162,75,0) 70%); pointer-events: none; }
+  background: radial-gradient(circle, rgba(63,174,126,.22) 0%, rgba(63,174,126,0) 70%); pointer-events: none; }
 .hero-inner { position: relative; display: flex; align-items: center; justify-content: center; gap: 18px; }
 .hero-wordmark { display: flex; align-items: center; gap: 16px; }
-.hero-investec { font-family: "Libre Caslon Text", Georgia, serif; font-size: 40px; color: #fff; letter-spacing: .5px; }
-.hero-divider { width: 1px; height: 38px; background: rgba(201,162,75,.6); }
-.hero-sentinel { font-family: "Libre Caslon Text", Georgia, serif; font-size: 40px; color: var(--accent); letter-spacing: .5px; }
-.hero-tag { position: relative; margin-top: 12px; color: #c3c9d6; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.hero-investec { font-family: Inter, system-ui, sans-serif; font-weight: 800; font-size: 38px; color: #fff; letter-spacing: 1.5px; }
+.hero-divider { width: 1px; height: 38px; background: rgba(127,174,151,.6); }
+.hero-sentinel { font-family: "Libre Caslon Text", Georgia, serif; font-size: 40px; color: #7fd3aa; letter-spacing: .5px; }
+.hero-tag { position: relative; margin-top: 12px; color: #b8ccc2; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
 @media (max-width: 720px) {
   .hero-logo { padding: 30px 28px; }
   .hero-investec, .hero-sentinel { font-size: 34px; }
@@ -175,7 +175,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
 /* Top-bar brand mark */
 .brandmark { display: flex; align-items: center; gap: 10px; }
 .brandmark-text { font-family: "Libre Caslon Text", Georgia, serif; font-size: 20px; color: var(--navy); }
-.brandmark-text b { font-weight: 400; }
+.brandmark-text b { font-family: Inter, system-ui, sans-serif; font-weight: 800; letter-spacing: .5px; margin-right: 4px; }
 .landing .brand { font-family: "Libre Caslon Text", Georgia, serif; font-size: 52px; font-weight: 400; color: var(--navy); display: flex; align-items: center; gap: 18px; }
 .landing .brand .mark { width: 50px; height: 50px; font-size: 22px; border-radius: 50%; border: 2px solid var(--accent); color: var(--accent); }
 .landing .tag { color: var(--muted); font-size: 18px; margin: 14px 0 40px; }

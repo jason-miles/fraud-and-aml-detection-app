@@ -7,8 +7,8 @@ import {
 } from "../api";
 import { Loading, num, LiveControls } from "../components/ui";
 
-const TEAL = "#30384a";   // Investec slate-navy for primary series
-const GOLD = "#c9a24b";
+const TEAL = "#006341";   // Nedbank signature green for primary series
+const GOLD = "#0a7a53";
 
 export function ExecutiveOverview() {
   const [tab, setTab] = useState<"alerts" | "team">("alerts");

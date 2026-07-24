@@ -1,18 +1,18 @@
-// Investec crosshair/target mark recreated as crisp inline SVG (razor-sharp at
-// any size) + the Sentinel lockup. Used for a spectacular hero on the landing
-// page and a compact mark in the top bar.
+// Nedbank mark recreated as crisp inline SVG (razor-sharp at any size): the
+// signature green square containing the stylized angular "N" in white negative
+// space, paired with the Sentinel lockup. Used for a spectacular hero on the
+// landing page and a compact mark in the top bar.
 
-export function Crosshair({ size = 40, color = "#c9a24b" }: { size?: number; color?: string }) {
-  const c = size / 2;
-  const r = size * 0.34;
+export function NedbankMark({ size = 40, color = "#006341" }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden>
-      <circle cx="50" cy="50" r="34" stroke={color} strokeWidth="6" />
-      <circle cx="50" cy="50" r="12" fill={color} />
-      <line x1="50" y1="2" x2="50" y2="30" stroke={color} strokeWidth="6" />
-      <line x1="50" y1="70" x2="50" y2="98" stroke={color} strokeWidth="6" />
-      <line x1="2" y1="50" x2="30" y2="50" stroke={color} strokeWidth="6" />
-      <line x1="70" y1="50" x2="98" y2="50" stroke={color} strokeWidth="6" />
+      {/* Green square tile */}
+      <rect x="4" y="4" width="92" height="92" rx="6" fill={color} />
+      {/* Stylized angular "N" carved in white — two uprights + diagonal */}
+      <path
+        d="M26 74 V26 H38 L62 58 V26 H74 V74 H62 L38 42 V74 Z"
+        fill="#ffffff"
+      />
     </svg>
   );
 }
@@ -23,9 +23,9 @@ export function HeroLogo() {
     <div className="hero-logo">
       <div className="hero-glow" />
       <div className="hero-inner">
-        <Crosshair size={42} color="#c9a24b" />
+        <NedbankMark size={48} color="#ffffff" />
         <div className="hero-wordmark">
-          <span className="hero-investec">Investec</span>
+          <span className="hero-investec">NEDBANK</span>
           <span className="hero-divider" />
           <span className="hero-sentinel">Sentinel</span>
         </div>
@@ -39,8 +39,8 @@ export function HeroLogo() {
 export function BrandMark() {
   return (
     <div className="brandmark">
-      <Crosshair size={26} color="#c9a24b" />
-      <span className="brandmark-text"><b>Investec</b> Sentinel</span>
+      <NedbankMark size={26} color="#006341" />
+      <span className="brandmark-text"><b>NEDBANK</b> Sentinel</span>
     </div>
   );
 }

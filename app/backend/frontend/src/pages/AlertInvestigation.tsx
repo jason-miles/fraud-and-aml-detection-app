@@ -4,13 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { getQueue, casePrioritize } from "../api";
 import { Sev, Loading, usePersona, num, money, LiveControls } from "../components/ui";
 
-// Investec tonal palette: slate-navy shades + gold + muted blue-grey.
+// Nedbank tonal palette: signature-green shades + muted sage.
 const SCEN_COLORS: Record<string, string> = {
-  "Cash Structuring Detection": "#30384a", "Dormant Account Reactivation": "#4a5468",
-  "Rapid Fund Movement": "#6a7183", "Related Account Movement": "#c9a24b",
-  "Round Dollar Pattern": "#8aa0b6", "PEP/Sanctions Alert": "#b42318",
-  "High-Risk Geography Transfer": "#b54708", "Beneficiary Mismatch": "#8a6d3b",
-  "Third-Party Deposit Pattern": "#aeb6c4",
+  "Cash Structuring Detection": "#006341", "Dormant Account Reactivation": "#0a7a53",
+  "Rapid Fund Movement": "#3fae7e", "Related Account Movement": "#044a33",
+  "Round Dollar Pattern": "#7fae97", "PEP/Sanctions Alert": "#b42318",
+  "High-Risk Geography Transfer": "#b54708", "Beneficiary Mismatch": "#5f7369",
+  "Third-Party Deposit Pattern": "#aecabb",
 };
 
 const REFRESH_MS = 20000; // near-real-time queue refresh cadence

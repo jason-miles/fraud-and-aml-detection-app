@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from server.routes import alerts, network, customers, travel, sherlock, genai, advanced_aml, sar_agents, sar_eval
 
-app = FastAPI(title="SherlockAML — Investec", version="0.2.0")
+app = FastAPI(title="SherlockAML — Nedbank", version="0.2.0")
 
 # CORS for local dev (Vite :5173 -> FastAPI :8000). Harmless in the app.
 app.add_middleware(

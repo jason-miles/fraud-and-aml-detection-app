@@ -84,7 +84,7 @@ def exec_briefing():
     top_scen = ", ".join(f"{r['scenario']} ({r['alerts']})" for r in scen)
     worst_team = ", ".join(f"{r['team_name']} ({r['past_due']} past due, {r['avg_hours']}h avg)" for r in teams)
     prompt = (
-        "You are a Chief Compliance Officer's AI analyst for Investec. Write a concise 4-5 sentence "
+        "You are a Chief Compliance Officer's AI analyst for Nedbank. Write a concise 4-5 sentence "
         "executive briefing on the AML program's current state. Data: "
         f"case volume {kpi.get('case_volume')}, avg investigation hours {kpi.get('avg_investigation_hours')}, "
         f"false positive rate {kpi.get('false_positive_rate')}%, past-due alerts {kpi.get('past_due_alerts')}, "
