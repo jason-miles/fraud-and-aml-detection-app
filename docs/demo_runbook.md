@@ -98,8 +98,8 @@ governed Lakehouse underneath — do less, get more with Unity Catalog."
 
 **Say:** "One governed Lakehouse. SQL-authored declarative detection your team owns, a fleet
 of AI agents that cut investigations from hours to minutes, natural-language self-service via
-Genie, and a tested Managed-DR posture. That's *do less, get more* — versus stitching Fabric
-+ AI Foundry together. Everything you saw is live on Databricks today."
+Genie, and a tested Managed-DR posture. That's *do less, get more* — versus stitching Nedbank's
+current Microsoft Fabric + Azure AI Foundry estate together. Everything you saw is live on Databricks today."
 
 ---
 

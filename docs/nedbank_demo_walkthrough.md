@@ -86,8 +86,9 @@ Click **Audit Trail**:
 
 ### 6 · Close (0:30)
 > "One platform: streaming ingestion, SQL detection, a governed ML model, multi-agent
-> investigation, regulator-grade goAML output, and bank-grade governance — replacing a
-> Fabric-plus-Foundry estate with one Lakehouse and one permission model. It's built
+> investigation, regulator-grade goAML output, and bank-grade governance — replacing
+> Nedbank's Microsoft Fabric + Azure AI Foundry estate with one Lakehouse and one
+> permission model. It's built
 > like production: bundle-deployed, CI/CD, 38 tests green."
 
 *(If you pre-ran Step 2: refresh the queue — "and there's our streamed alert, live.")*

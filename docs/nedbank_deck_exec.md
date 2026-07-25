@@ -27,7 +27,7 @@ business; done right it lowers risk, cuts cost, and speeds the business up.
 - Faster payments + rising regulatory expectations = compliance must be **near-real-time**
 - Legacy AML: too many false positives, slow manual investigations, weak audit trail
 - Regulators increasingly ask: *"prove your models and your decisions"*
-- Fragmented tooling (data in one place, AI in another) multiplies cost and risk
+- Fragmented tooling — Nedbank's data in Microsoft Fabric, AI in Azure Foundry — multiplies cost and risk
 
 **Speaker notes:** Set the stakes in business terms. The status quo is expensive
 (analyst time lost to false positives), risky (gaps regulators probe), and slow. The
@@ -91,8 +91,8 @@ turns audit and model-risk reviews from a scramble into a query.
 ## Slide 7 — One platform, lower total cost
 
 - Detection, AI, investigation, reporting, and governance on **one Databricks platform**
-- Replaces a fragmented estate (data in Microsoft Fabric, AI in Azure Foundry, +
-  separate security) — fewer moving parts, one permission model
+- Replaces Nedbank's current fragmented estate (data in Microsoft Fabric, AI in
+  Azure AI Foundry, + separate security) — fewer moving parts, one permission model
 - Less integration, less duplication, less risk of things falling between systems
 - Owned by the existing team — built SQL-first
 
@@ -123,4 +123,4 @@ path to production and where to point it first.
 - Regulatory output: goAML (UN/UNODC) STR XML, structurally validated
 - Controls: four-eyes SAR approval, PII masking, row-level security, immutable audit
 - AI governance: model registry + drift monitoring + LLM eval/guardrail record
-- Consolidation target: Microsoft Fabric + Azure AI Foundry → one Databricks Lakehouse
+- Consolidation target: Nedbank's Microsoft Fabric + Azure AI Foundry → one Databricks Lakehouse

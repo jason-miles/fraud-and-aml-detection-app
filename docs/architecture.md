@@ -106,9 +106,13 @@ for local dev.
 
 ---
 
-## 5. Competitive framing (vs Microsoft Fabric + AI Foundry)
+## 5. Competitive framing (vs Nedbank's current Microsoft Fabric + Azure AI Foundry estate)
 
-| Dimension | Sentinel on Databricks | Fabric + AI Foundry |
+Nedbank today runs data on **Microsoft Fabric** and AI on **Azure AI Foundry** — two
+separate planes to integrate, govern, and skill for. Sentinel consolidates both onto
+one Databricks Lakehouse:
+
+| Dimension | Sentinel on Databricks | Nedbank's Fabric + AI Foundry estate |
 |-----------|------------------------|---------------------|
 | Data plane | One governed Lakehouse (UC) | Split OneLake / warehouse / semantic model surfaces |
 | Detection | SQL-authored declarative pipelines the team owns | Stitched Foundry + Fabric orchestration |

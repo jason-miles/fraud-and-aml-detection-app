@@ -5,7 +5,8 @@
 > heading. Use the bullet points as slide content and the 'Speaker notes' as the
 > presenter script."* Audience: **Nedbank data & platform engineering** (technical),
 > with financial-crime stakeholders in the room. Tone: architecture-led, evidence-
-> backed, vendor-displacement aware (incumbent: Azure AI Foundry + Microsoft Fabric).
+> backed, vendor-displacement aware (Nedbank's incumbent estate: data on Microsoft
+> Fabric, AI on Azure AI Foundry).
 
 ---
 
@@ -20,7 +21,8 @@ CDP & Financial Crime Intelligence Platform on the Databricks Data Intelligence 
 **Speaker notes:** Sentinel is a working demo — not slideware. Every capability shown
 is deployed on Databricks and exercised against realistic synthetic data. The thesis:
 the entire AML value chain — ingest, detect, investigate, decide, report, govern — can
-live on one platform, replacing a fragmented Data Vault + Tabular + Fabric estate.
+live on one platform, replacing Nedbank's fragmented Microsoft Fabric (data) + Azure
+AI Foundry (AI) estate.
 
 ---
 
@@ -233,4 +235,4 @@ the path from demo-grade to production, all of which the platform natively suppo
 - SAR: multi-agent + vector-search adverse media + goAML STR XML + 4-eyes + validation
 - Governance: PII column masks, RLS row filter, immutable audit log, LLM eval record
 - Tests: 32 pytest + 6 Playwright e2e; DQ expectations on every dataset
-- Incumbent being displaced: Azure AI Foundry + Microsoft Fabric
+- Incumbent being displaced: Nedbank's current estate — data on Microsoft Fabric, AI on Azure AI Foundry

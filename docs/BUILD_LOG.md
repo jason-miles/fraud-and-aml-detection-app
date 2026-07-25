@@ -15,8 +15,9 @@ can understand what exists, why, and how it was produced.
 ## 0. What this is
 
 An end-to-end, SQL-first Anti-Money-Laundering + CDP platform for Nedbank Wealth &
-Banking, built on Databricks and displacing an Azure AI Foundry + Microsoft Fabric
-approach. It combines a governed medallion Lakehouse, a Lakeflow declarative
+Banking, built on Databricks and consolidating Nedbank's current Microsoft Fabric
+(data) + Azure AI Foundry (AI) estate onto one platform. It combines a governed
+medallion Lakehouse, a Lakeflow declarative
 detection pipeline, GenAI (Genie + Foundation Model APIs), and a branded React +
 FastAPI Databricks App. Narrative: **"do less, get more with Unity Catalog."**
 

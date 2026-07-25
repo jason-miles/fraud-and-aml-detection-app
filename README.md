@@ -2,7 +2,7 @@
 
 A demo/PoC that answers, end-to-end: **"What kinds of alerts would indicate fraud for Nedbank Wealth & Banking, and what do we do about them?"**
 
-Built SQL-first (Lakeflow Declarative Pipelines) so a SQL-skilled team can own it. Python is confined to the app shell and a few AI/graph helpers. Competitive context: displacing Azure AI Foundry + Microsoft Fabric.
+Built SQL-first (Lakeflow Declarative Pipelines) so a SQL-skilled team can own it. Python is confined to the app shell and a few AI/graph helpers. Competitive context: consolidating Nedbank's current Microsoft Fabric (data) + Azure AI Foundry (AI) estate onto one Databricks Lakehouse.
 
 ## Narrative
 **Do less, get more with Unity Catalog.** One catalog, one lineage graph, one permission model across Customers / Accounts / Transactions / Third Parties — replacing the legacy Data Vault + Tabular sprawl.
