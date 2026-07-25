@@ -1,7 +1,7 @@
-# Investec Sentinel — Demo Runbook
+# Nedbank Sentinel — Demo Runbook
 
 **App:** https://investec-fraud-aml-7474654808133980.aws.databricksapps.com
-**Audience:** Investec Wealth & Banking (SQL-skilled team) + ICIB stakeholders
+**Audience:** Nedbank Wealth & Banking (SQL-skilled team) + Corporate & Investment Banking stakeholders
 **Duration:** ~12–15 min · **One-line pitch:** *AI-augmented AML — investigations from hours to minutes, on one governed Lakehouse.*
 
 ---
@@ -19,8 +19,8 @@
 
 ## 1. Landing (30s) — set the frame
 
-**Show:** the landing page — Investec | Sentinel hero, 90% / 50% / $10M+ band, two entry cards.
-**Say:** "Sentinel is Investec's CDP and financial-crime intelligence platform on Databricks.
+**Show:** the landing page — Nedbank | Sentinel hero, 90% / 50% / $10M+ band, two entry cards.
+**Say:** "Sentinel is Nedbank's CDP and financial-crime intelligence platform on Databricks.
 Two doors: an **executive view** for the CCO, and an **analyst workspace**. Everything is one
 governed Lakehouse underneath — do less, get more with Unity Catalog."
 

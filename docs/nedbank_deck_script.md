@@ -1,9 +1,9 @@
-# Investec Sentinel on Databricks — Deck Source (NotebookLM)
+# Nedbank Sentinel on Databricks — Deck Source (NotebookLM)
 
 > **How to use this file:** Load it into Google NotebookLM as a source, then prompt:
 > *"Create a professional slide deck from this document. One slide per `## Slide`
 > heading. Use the bullet points as slide content and the 'Speaker notes' as the
-> presenter script."* Audience: **Investec data & platform engineering** (technical),
+> presenter script."* Audience: **Nedbank data & platform engineering** (technical),
 > with financial-crime stakeholders in the room. Tone: architecture-led, evidence-
 > backed, vendor-displacement aware (incumbent: Azure AI Foundry + Microsoft Fabric).
 
@@ -11,7 +11,7 @@
 
 ## Slide 1 — Title
 
-**Investec Sentinel**
+**Nedbank Sentinel**
 CDP & Financial Crime Intelligence Platform on the Databricks Data Intelligence Platform
 
 - One governed Lakehouse for AML detection, investigation, and regulatory reporting

@@ -1,6 +1,6 @@
-# Investec Wealth & Banking — Fraud & AML Detection App on Databricks
+# Nedbank Wealth & Banking — Fraud & AML Detection App on Databricks
 
-A demo/PoC that answers, end-to-end: **"What kinds of alerts would indicate fraud for Investec Wealth & Banking, and what do we do about them?"**
+A demo/PoC that answers, end-to-end: **"What kinds of alerts would indicate fraud for Nedbank Wealth & Banking, and what do we do about them?"**
 
 Built SQL-first (Lakeflow Declarative Pipelines) so a SQL-skilled team can own it. Python is confined to the app shell and a few AI/graph helpers. Competitive context: displacing Azure AI Foundry + Microsoft Fabric.
 

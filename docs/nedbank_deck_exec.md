@@ -1,16 +1,16 @@
-# Investec Sentinel — Executive Deck Source (NotebookLM)
+# Nedbank Sentinel — Executive Deck Source (NotebookLM)
 
 > **How to use:** Load into Google NotebookLM as a source and prompt:
 > *"Create a concise executive slide deck from this document — one slide per `## Slide`
 > heading, bullets as slide content, 'Speaker notes' as the script. Keep it visual and
-> high-level."* Audience: **Investec executives / C-suite** (MLRO, CRO, CDO, CFO lens).
+> high-level."* Audience: **Nedbank executives / C-suite** (MLRO, CRO, CDO, CFO lens).
 > Tone: outcomes, risk, and cost — not architecture. ~8 slides, ~5-minute read.
 
 ---
 
 ## Slide 1 — Title
 
-**Investec Sentinel**
+**Nedbank Sentinel**
 Turning financial-crime compliance into a competitive advantage — on Databricks
 
 - One platform for AML detection, investigation, and regulatory reporting

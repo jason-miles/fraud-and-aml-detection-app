@@ -1,4 +1,4 @@
-# CI/CD — Investec Sentinel (roadmap #5)
+# CI/CD — Nedbank Sentinel (roadmap #5)
 
 ## Activation checklist (one-time)
 

@@ -1,4 +1,4 @@
-# Managed Disaster Recovery Posture — Investec Sentinel
+# Managed Disaster Recovery Posture — Nedbank Sentinel
 
 **Audience:** Champion / Platform owner (Walter Kielblock) · Compliance & Risk
 **Purpose:** Articulate the resilience story for the Sentinel CDP & Financial Crime

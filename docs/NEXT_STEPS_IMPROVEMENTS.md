@@ -1,4 +1,4 @@
-# Investec Sentinel — Next Steps & Improvement Ideas
+# Nedbank Sentinel — Next Steps & Improvement Ideas
 
 **For:** any engineer or AI/LLM agent picking up this app.
 **Read first:** `BUILD_LOG.md` (what exists and why) and `app/docs/architecture.md`.
@@ -13,7 +13,7 @@ improve to make it more realistic, enterprise-ready, and bank-grade for AML.
 
 - SQL-first medallion (bronze/silver/gold) on Unity Catalog; Lakeflow declarative
   detection pipeline (9 families) + sanctions screening, pKYC, peer anomaly.
-- React + FastAPI Databricks App (Investec Sentinel): Executive Overview, Alert
+- React + FastAPI Databricks App (Nedbank Sentinel): Executive Overview, Alert
   Investigation, Compliance, Graph Explorer, Ask Sentinel (Genie).
 - GenAI: Genie NL analytics, multi-agent assistant, AI triage/briefing/prioritize,
   SAR narrative generation, adverse-media summaries.
@@ -228,7 +228,7 @@ improve to make it more realistic, enterprise-ready, and bank-grade for AML.
     converted to real keyboard-operable `<button>`s; skip-to-content link + `<main>`
     landmark; global `:focus-visible` outline. Remaining: i18n, full WCAG audit.
   - ✅ **Embedded AI/BI dashboard DONE (2026-07-20).** Published Lakeview dashboard
-    "Investec Sentinel — Executive Overview" (KPI counters + daily-alerts line +
+    "Nedbank Sentinel — Executive Overview" (KPI counters + daily-alerts line +
     scenario bar + team-performance table over the exec gold views); embedded via a
     new Reports nav tab (iframe, env-driven `/api/config`, direct-open fallback).
     JSON in `dashboards/exec_overview.lvdash.json`. Remaining: accessibility/i18n,

@@ -1,4 +1,4 @@
-# Investec Sentinel — Architecture Overview
+# Nedbank Sentinel — Architecture Overview
 
 **CDP & Financial Crime Intelligence Platform on the Databricks Data Intelligence Platform.**
 One governed Lakehouse replacing a legacy Data-Vault + Tabular + feed-back-to-SQL estate.
@@ -34,7 +34,7 @@ One governed Lakehouse replacing a legacy Data-Vault + Tabular + feed-back-to-SQ
         ┌─────────────────────────┼──────────────────────────┐
         ▼                         ▼                          ▼
    Databricks App           Genie space              Scheduled Lakeflow Job
-   "Investec Sentinel"      "Fraud & AML Analyst"    fraud_aml_daily_report
+   "Nedbank Sentinel"      "Fraud & AML Analyst"    fraud_aml_daily_report
    React + FastAPI          NL → governed SQL        (full-refresh + email)
    3 views + Ask + agents
 ```
@@ -78,7 +78,7 @@ beneficial owner."*
 
 ## 3. Application
 
-**Databricks App "Investec Sentinel"** — React + FastAPI, served as a single process (all
+**Databricks App "Nedbank Sentinel"** — React + FastAPI, served as a single process (all
 data access through UC; app holds no business logic beyond presentation + write-backs).
 
 | View | Purpose |
@@ -127,7 +127,7 @@ sql/                 versioned DDL/logic (foundation, silver, gold, intelligence
 data/                synthetic data seeder + planted fraud scenarios; data/stream/ file-drop generator
 fraud_aml_pipeline/  Lakeflow Declarative Pipeline bundle (deployed) + jobs
 ml/                  SAR-propensity model: train + batch-score scripts (MLflow → UC registry)
-app/backend/         FastAPI + React (Investec Sentinel Databricks App) + tests/ + frontend/e2e/
+app/backend/         FastAPI + React (Nedbank Sentinel Databricks App) + tests/ + frontend/e2e/
 dashboards/          Lakeview AI/BI dashboard JSON (exec overview)
 genie/               Genie space curation (glossary + certified queries)
 resources/           root-bundle app + retrain-job resources; databricks.yml unifies deploy

@@ -1,6 +1,6 @@
-# Investec Sentinel — Build Log
+# Nedbank Sentinel — Build Log
 
-**Product:** Investec Sentinel — CDP & Financial Crime Intelligence Platform
+**Product:** Nedbank Sentinel — CDP & Financial Crime Intelligence Platform
 **Platform:** Databricks Data Intelligence Platform (AWS, `eu-central-1`)
 **Workspace:** `fevm-elexon-app-for-settlement-acc.cloud.databricksapps.com` (id `7474654808133980`)
 **Repo:** https://github.com/jason-miles/fraud-and-aml-detection-app (`main`)
@@ -14,7 +14,7 @@ can understand what exists, why, and how it was produced.
 
 ## 0. What this is
 
-An end-to-end, SQL-first Anti-Money-Laundering + CDP platform for Investec Wealth &
+An end-to-end, SQL-first Anti-Money-Laundering + CDP platform for Nedbank Wealth &
 Banking, built on Databricks and displacing an Azure AI Foundry + Microsoft Fabric
 approach. It combines a governed medallion Lakehouse, a Lakeflow declarative
 detection pipeline, GenAI (Genie + Foundation Model APIs), and a branded React +
@@ -96,9 +96,9 @@ deployed Bronze→Silver→Gold DAG (Design Canvas).
 - `docs/demo_runbook.md` — ~12–15 min click path + talk track + reset steps.
 - `docs/architecture.md` — end-to-end diagram, layers, DR, Fabric/Foundry framing.
 
-## Rebuild — "Investec Sentinel" (advanced, per SherlockAML reference)
+## Rebuild — "Nedbank Sentinel" (advanced, per SherlockAML reference)
 
-Renamed from the interim "SherlockAML" reference build to **Investec Sentinel**.
+Renamed from the interim "SherlockAML" reference build to **Nedbank Sentinel**.
 
 - **Case-management data layer** — `sherlock_teams` (4), `sherlock_analysts`
   (6 personas incl. Sarah Chen), `sherlock_cases` (650 cases over 9 scenarios with
@@ -110,7 +110,7 @@ Renamed from the interim "SherlockAML" reference build to **Investec Sentinel**.
   **multi-agent chat**, **AI triage**, escalate/dismiss/proceed-to-SAR), SAR Filing
   (AI narrative → PDF → submit → audit trail), Graph Explorer, Ask Sentinel.
 - **Design = investec.com**: Libre Caslon Text serif + Inter, slate-navy `#30384a`
-  + gold `#c9a24b`, near-square corners, spectacular inline-SVG "Investec | Sentinel"
+  + gold `#c9a24b`, near-square corners, spectacular inline-SVG "Nedbank | Sentinel"
   hero logo.
 
 ## GenAI enhancements
@@ -186,7 +186,7 @@ Each bullet lists the artifact so it can be rebuilt. (Roadmap refs → `NEXT_STE
 | App warehouse | `d0305022e6c3db8e` (elexon-anamoly-app; Large, 1–3 clusters, 45m auto-stop) |
 | Vector Search index | `...gold.adverse_media_index` on `valterra-vs-endpoint` |
 | UC model | `...gold.sar_propensity_gbt` (v2, MLflow/UC registry) |
-| AI/BI dashboard | `01f1843c859f1acb97f76971d642826c` ("Investec Sentinel — Executive Overview") |
+| AI/BI dashboard | `01f1843c859f1acb97f76971d642826c` ("Nedbank Sentinel — Executive Overview") |
 | Landing volume | `...investec_fraud_aml_bronze.landing/{transactions,card_transactions}/` |
 | Jobs | `fraud_aml_daily_report`, `fraud_aml_stream_trigger` (file-arrival), `fraud_ml_retrain` (weekly) |
 | New gold tables | `ml_alert_features/_sar_labels/_alert_scores/_model_metrics/_feature_baseline/_drift_metrics`, `audit_log`, `llm_eval_results` |

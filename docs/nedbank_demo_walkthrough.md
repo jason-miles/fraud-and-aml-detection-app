@@ -1,7 +1,7 @@
-# Investec Sentinel — Live Demo Walkthrough (≈ 6.5 min)
+# Nedbank Sentinel — Live Demo Walkthrough (≈ 6.5 min)
 
 **App:** https://investec-fraud-aml-7474654808133980.aws.databricksapps.com
-**Audience:** Investec data/platform + financial-crime. **Goal:** show the full AML
+**Audience:** Nedbank data/platform + financial-crime. **Goal:** show the full AML
 value chain on one governed Databricks platform. **Total: ~6m30s.**
 
 **Pre-flight (before you start):**
@@ -12,7 +12,7 @@ value chain on one governed Databricks platform. **Total: ~6m30s.**
 ---
 
 ### 0 · Hook (0:30)
-> "This is Investec Sentinel — a working AML platform on Databricks. Everything you'll
+> "This is Nedbank Sentinel — a working AML platform on Databricks. Everything you'll
 > see runs on one governed Lakehouse: ingestion, detection, ML, investigation, the
 > regulatory filing, and the controls around it. No extracts, no second security model."
 
