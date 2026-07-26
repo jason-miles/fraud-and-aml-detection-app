@@ -28,13 +28,25 @@ def _to_params(parameters: Optional[List[Dict]]):
 
 def _execute(sql: str, parameters: Optional[List[Dict]] = None) -> StatementResponse:
     client = get_workspace_client()
-    return client.statement_execution.execute_statement(
+    # 50s is the Statement Execution API max synchronous wait. ai_query() LLM calls
+    # (multi-agent SAR) can take 10-40s; the old 30s wait risked a spurious timeout
+    # on a single slow call. If a statement still isn't done at 50s the API returns
+    # a PENDING handle rather than data — poll to completion below.
+    resp = client.statement_execution.execute_statement(
         statement=sql,
         warehouse_id=WAREHOUSE_ID,
         parameters=_to_params(parameters),
-        wait_timeout="30s",
+        wait_timeout="50s",
         catalog=CATALOG,
     )
+    # Poll if the warehouse returned before the statement finished (long ai_query).
+    import time
+    waited = 0.0
+    while resp.status and resp.status.state in (StatementState.PENDING, StatementState.RUNNING) and waited < 120:
+        time.sleep(2)
+        waited += 2
+        resp = client.statement_execution.get_statement(resp.statement_id)
+    return resp
 
 
 def fetch_all(sql: str, parameters: Optional[List[Dict]] = None) -> List[Dict[str, Any]]:

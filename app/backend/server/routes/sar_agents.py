@@ -195,9 +195,15 @@ def orchestrate(req: OrchestrateReq):
         return {"detail": "not found"}
     brief = _evidence_brief(ev)
 
-    trace = []
-    for key, system, task in SPECIALISTS:
-        trace.append({"agent": key, "finding": _agent(system, brief, task)})
+    # The 3 specialist agents are independent — only the supervisor needs all of
+    # them. Run them concurrently (each is a separate ai_query LLM round-trip of a
+    # few seconds; sequential = sum, parallel = max) so the workflow finishes in
+    # roughly half the time. Order of the trace is preserved to match SPECIALISTS.
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(SPECIALISTS)) as pool:
+        findings_list = list(pool.map(lambda s: _agent(s[1], brief, s[2]), SPECIALISTS))
+    trace = [{"agent": key, "finding": finding}
+             for (key, _sys, _task), finding in zip(SPECIALISTS, findings_list)]
 
     findings = " ".join(f"[{t['agent']}] {t['finding']}" for t in trace)
     supervisor = _agent(
