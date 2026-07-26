@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { PersonaProvider, usePersona } from "./components/ui";
 import { BrandMark } from "./components/Logo";
@@ -16,15 +16,18 @@ function useTheme(): [string, () => void] {
   }, [theme]);
   return [theme, () => setTheme((t) => (t === "dark" ? "light" : "dark"))];
 }
+// Landing is eager — it's the instant first paint. Every routed page is lazy so
+// heavy deps (cytoscape on Graph, recharts on the chart pages) split into their
+// own chunks and only download when that page is actually visited.
 import { Landing } from "./pages/Landing";
-import { ExecutiveOverview } from "./pages/ExecutiveOverview";
-import { AlertInvestigation } from "./pages/AlertInvestigation";
-import { Investigation } from "./pages/Investigation";
-import { SarFiling } from "./pages/SarFiling";
-import { GraphExplorer } from "./pages/GraphExplorer";
-import { AskSentinel } from "./pages/AskSentinel";
-import { Compliance } from "./pages/Compliance";
-import { Reports } from "./pages/Reports";
+const ExecutiveOverview = lazy(() => import("./pages/ExecutiveOverview").then((m) => ({ default: m.ExecutiveOverview })));
+const AlertInvestigation = lazy(() => import("./pages/AlertInvestigation").then((m) => ({ default: m.AlertInvestigation })));
+const Investigation = lazy(() => import("./pages/Investigation").then((m) => ({ default: m.Investigation })));
+const SarFiling = lazy(() => import("./pages/SarFiling").then((m) => ({ default: m.SarFiling })));
+const GraphExplorer = lazy(() => import("./pages/GraphExplorer").then((m) => ({ default: m.GraphExplorer })));
+const AskSentinel = lazy(() => import("./pages/AskSentinel").then((m) => ({ default: m.AskSentinel })));
+const Compliance = lazy(() => import("./pages/Compliance").then((m) => ({ default: m.Compliance })));
+const Reports = lazy(() => import("./pages/Reports").then((m) => ({ default: m.Reports })));
 
 function TopBar() {
   const { personas, current, setCurrent } = usePersona();
@@ -65,16 +68,18 @@ function Shell() {
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <TopBar />
       <main id="main-content" className="page">
-        <Routes>
-          <Route path="/exec" element={<ExecutiveOverview />} />
-          <Route path="/investigation" element={<AlertInvestigation />} />
-          <Route path="/investigation/:caseId" element={<Investigation />} />
-          <Route path="/sar/:caseId" element={<SarFiling />} />
-          <Route path="/graph" element={<GraphExplorer />} />
-          <Route path="/ask" element={<AskSentinel />} />
-          <Route path="/compliance" element={<Compliance />} />
-          <Route path="/reports" element={<Reports />} />
-        </Routes>
+        <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading…</div>}>
+          <Routes>
+            <Route path="/exec" element={<ExecutiveOverview />} />
+            <Route path="/investigation" element={<AlertInvestigation />} />
+            <Route path="/investigation/:caseId" element={<Investigation />} />
+            <Route path="/sar/:caseId" element={<SarFiling />} />
+            <Route path="/graph" element={<GraphExplorer />} />
+            <Route path="/ask" element={<AskSentinel />} />
+            <Route path="/compliance" element={<Compliance />} />
+            <Route path="/reports" element={<Reports />} />
+          </Routes>
+        </Suspense>
       </main>
     </>
   );
