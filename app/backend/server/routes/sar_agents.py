@@ -187,6 +187,27 @@ class OrchestrateReq(BaseModel):
     case_id: str
 
 
+@router.get("/evidence/{case_id}")
+def evidence(case_id: str):
+    """FAST path: gather + return the evidence pack ONLY (SQL, no LLM). Lets the UI
+    render the evidence panel in ~1s while the slow multi-agent /orchestrate call
+    (3 specialists + supervisor, ~6s of ai_query) runs in the background."""
+    ev = gather_evidence(case_id)
+    if not ev:
+        return {"detail": "not found"}
+    c = ev["case"]
+    return {
+        "case_id": c["case_id"], "customer_name": c["customer_name"],
+        "scenario": c["scenario"], "priority": c["priority"],
+        "risk_score": c["risk_score"], "amount": c["amount"],
+        "evidence": {
+            "transactions": ev["transactions"], "network": ev["network"],
+            "screening": ev["screening"], "pkyc": ev["pkyc"],
+            "adverse_media": ev.get("adverse_media", []),
+        },
+    }
+
+
 @router.post("/orchestrate")
 def orchestrate(req: OrchestrateReq):
     """Run the full multi-agent SAR workflow with auto-gathered evidence."""

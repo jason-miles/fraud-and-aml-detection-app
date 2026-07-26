@@ -45,6 +45,8 @@ export const caseReassign = (b: any) => apiPost(`${S}/case/reassign`, b);
 export const agentChat = (b: any) => apiPost(`${S}/agent/chat`, b);
 export const sarGenerate = (b: any) => apiPost(`${S}/sar/generate`, b);
 export const sarSubmit = (b: any) => apiPost(`${S}/sar/submit`, b);
+export const sarEvidence = (caseId: string) =>
+  apiGet(`/api/sar/evidence/${encodeURIComponent(caseId)}`);
 export const sarOrchestrate = (b: any) => apiPost(`/api/sar/orchestrate`, b);
 export const goamlUrl = (caseId: string, narrative = "") =>
   `/api/sar/goaml/${encodeURIComponent(caseId)}?narrative=${encodeURIComponent(narrative.slice(0, 1200))}`;
