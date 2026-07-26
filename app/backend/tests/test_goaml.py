@@ -56,6 +56,35 @@ def test_goaml_empty_evidence():
     assert goaml_from_evidence({"case": None}, "") == "<report/>"
 
 
+def test_numeric_fields_as_strings():
+    """Regression: the Databricks SQL Statement Execution API returns every value
+    as a STRING (amount '19850.00', risk_score '92'). goaml_from_evidence and
+    _evidence_brief must not crash on round()/f-string formatting of those."""
+    ev = {
+        "case": {**EV["case"], "risk_score": "92", "amount": "5420000.00"},
+        "transactions": [
+            {"transaction_id": "TXN1", "amount": "19850.00", "direction": "debit",
+             "channel": "app", "txn_ts": "2025-11-21", "counterparty_id": "CP1"},
+        ],
+    }
+    xml = goaml_from_evidence(ev, "N")           # must not raise
+    minidom.parseString(xml)                     # well-formed
+    assert "<amount_local>19850.0</amount_local>" in xml
+    assert "<total_amount>5420000.0</total_amount>" in xml
+    brief = _evidence_brief(ev)                  # must not raise
+    assert "largest ZAR 19,850" in brief
+
+
+def test_numeric_fields_none_or_blank():
+    """Guard: None/'' amounts coerce to 0, never crash."""
+    ev = {"case": {**EV["case"], "amount": None},
+          "transactions": [{"transaction_id": "T", "amount": "", "direction": "debit",
+                            "channel": "app", "txn_ts": "", "counterparty_id": None}]}
+    xml = goaml_from_evidence(ev, "N")
+    minidom.parseString(xml)
+    assert "<total_amount>0.0</total_amount>" in xml
+
+
 def test_x_escapes_and_skips_empty():
     assert _x("t", None) == ""
     assert _x("t", "") == ""

@@ -26,6 +26,18 @@ from ..config import CATALOG, GOLD_SCHEMA, SILVER_SCHEMA, get_workspace_client
 
 router = APIRouter(prefix="/api/sar", tags=["sar-agents"])
 
+
+def _num(v, default: float = 0.0) -> float:
+    """Coerce a value to float. The Databricks SQL Statement Execution API returns
+    every column as a STRING (result.data_array is all text), so numeric fields
+    like amount/risk_score arrive as e.g. '19850.00'. Guard against None/''/bad
+    values so downstream round()/f-string formatting never crashes."""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
 LLM = "databricks-meta-llama-3-3-70b-instruct"
 ADVERSE_MEDIA_INDEX = f"{CATALOG}.{GOLD_SCHEMA}.adverse_media_index"
 
@@ -129,7 +141,7 @@ def _evidence_brief(ev: dict) -> str:
     if ev.get("transactions"):
         t = ev["transactions"]
         lines.append(f"{len(t)} flagged transactions; largest ZAR "
-                     f"{max((x['amount'] or 0) for x in t):.0f}; directions "
+                     f"{max(_num(x['amount']) for x in t):,.0f}; directions "
                      f"{sorted(set(x['direction'] for x in t))}.")
     if ev.get("network"):
         cps = [x for x in ev["network"] if x.get("counterparty_id")]
@@ -246,7 +258,7 @@ def goaml_from_evidence(ev: dict, narrative: str = "") -> str:
         tx_xml += "      <transaction>\n"
         tx_xml += _x("transactionnumber", t.get("transaction_id"), 8)
         tx_xml += _x("transaction_type", t.get("direction"), 8)
-        tx_xml += _x("amount_local", round(t.get("amount") or 0, 2), 8)
+        tx_xml += _x("amount_local", round(_num(t.get("amount")), 2), 8)
         tx_xml += _x("transaction_channel", t.get("channel"), 8)
         tx_xml += _x("date_transaction", str(t.get("txn_ts") or "")[:19], 8)
         tx_xml += _x("counterparty", t.get("counterparty_id"), 8)
@@ -284,7 +296,7 @@ def goaml_from_evidence(ev: dict, narrative: str = "") -> str:
     xml += "    </suspicious_party>\n"
     xml += "    <goods_services>\n"
     xml += _x("item_type", "FUNDS", 6)
-    xml += _x("total_amount", round(c.get("amount") or 0, 2), 6)
+    xml += _x("total_amount", round(_num(c.get("amount")), 2), 6)
     xml += _x("currency_code", "ZAR", 6)
     xml += "    </goods_services>\n"
     xml += "    <transactions>\n" + tx_xml + "    </transactions>\n"
