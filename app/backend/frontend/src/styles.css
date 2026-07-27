@@ -250,3 +250,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
   .arch-arrow { transform: rotate(90deg); align-self: center; padding: 4px 0; }
   .arch-apps { border-left: none; border-top: 2px dashed var(--border); padding-left: 0; padding-top: 14px; }
 }
+
+/* Platform (medallion) architecture sub-page */
+.arch-cloud-title { font-size: 15px; font-weight: 700; color: var(--navy); margin: 4px 0 16px; }
+.arch-medallion { min-width: 210px; }
+.arch-medallion-etl { text-align: center; font-size: 11px; color: var(--muted); margin: 2px 0 8px; letter-spacing: .04em; }
+.arch-bronze { border-left: 3px solid #b06a2c; }
+.arch-silver { border-left: 3px solid #8a94a6; }
+.arch-gold { border-left: 3px solid var(--accent); }
