@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getQueue, casePrioritize } from "../api";
-import { Sev, Loading, usePersona, num, money, LiveControls } from "../components/ui";
+import { Sev, Loading, ErrorState, usePersona, num, money, LiveControls } from "../components/ui";
 
 // Nedbank tonal palette: signature-green shades + muted sage.
 const SCEN_COLORS: Record<string, string> = {
@@ -20,6 +20,7 @@ export function AlertInvestigation() {
   const { current } = usePersona();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
   const [live, setLive] = useState(true);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [, setTick] = useState(0); // ticks so the "updated Ns ago" label stays fresh
@@ -27,10 +28,15 @@ export function AlertInvestigation() {
   const [fScenario, setFScenario] = useState("");
 
   // Initial load (with spinner) whenever persona or filters change.
+  const load = () => {
+    if (!current) return;
+    setErr(false);
+    getQueue(current.analyst_id, fPriority, fScenario).then((d) => { setErr(false); setData(d); setUpdatedAt(Date.now()); setLoading(false); }).catch(() => { setErr(true); setLoading(false); });
+  };
   useEffect(() => {
     if (!current) return;
     setLoading(true);
-    getQueue(current.analyst_id, fPriority, fScenario).then((d) => { setData(d); setUpdatedAt(Date.now()); setLoading(false); }).catch(() => setLoading(false));
+    load();
   }, [current, fPriority, fScenario]);
 
   // Live polling — silent refresh (no spinner), pausable. Respects active filters.
@@ -48,6 +54,7 @@ export function AlertInvestigation() {
     return () => clearInterval(id);
   }, []);
 
+  if (err) return <ErrorState what="my queue" onRetry={() => { setLoading(true); load(); }} />;
   if (loading || !data) return <Loading what="my queue" />;
   const k = data.kpis || {};
 

@@ -7,6 +7,19 @@ export function Sev({ s }: { s: string }) {
 export function Loading({ what = "data" }: { what?: string }) {
   return <div className="loading">Loading {what}…</div>;
 }
+// Shown when a fetch fails — a clear message + inline Retry, never a blank panel.
+export function ErrorState({ what = "data", onRetry }: { what?: string; onRetry?: () => void }) {
+  return (
+    <div className="state-msg state-err" role="alert">
+      <span>Couldn’t load {what}.</span>
+      {onRetry && <button type="button" className="btn sm ghost" onClick={onRetry}>↻ Retry</button>}
+    </div>
+  );
+}
+// Shown when a fetch succeeds but returns nothing — distinguishes empty from broken.
+export function EmptyState({ what = "records" }: { what?: string }) {
+  return <div className="state-msg state-empty" role="status">No {what} found.</div>;
+}
 export function num(v: any): number {
   const n = Number(v);
   return isNaN(n) ? 0 : n;

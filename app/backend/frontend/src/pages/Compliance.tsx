@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getScreening, getPkyc, getPkycSummary, getAnomalies, getModelGovernance, getModelDrift, getLlmEval, getAudit } from "../api";
-import { Loading, num, money } from "../components/ui";
+import { Loading, ErrorState, num, money } from "../components/ui";
 
 function Badge({ s }: { s: string }) {
   const map: Record<string, string> = { confirmed: "critical", probable: "high", possible: "medium",
@@ -33,8 +33,11 @@ export function Compliance() {
 function AuditTrail() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getAudit(150).then((r) => { setRows(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  const [err, setErr] = useState(false);
+  const load = () => { setErr(false); getAudit(150).then((r) => { setErr(false); setRows(r); setLoading(false); }).catch(() => { setErr(true); setLoading(false); }); };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="audit trail" />;
+  if (err) return <ErrorState what="audit trail" onRetry={() => { setLoading(true); load(); }} />;
   const label: Record<string, string> = {
     case_open: "Case opened", note_add: "Note added", case_action: "Case action",
     sar_submit: "SAR filed", sar_generate: "SAR drafted",
@@ -76,12 +79,16 @@ function ModelGovernance() {
   const [drift, setDrift] = useState<any>(null);
   const [ev, setEv] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  const [err, setErr] = useState(false);
+  const load = () => {
+    setErr(false);
     Promise.all([getModelGovernance(), getModelDrift().catch(() => null), getLlmEval().catch(() => null)])
-      .then(([mg, dr, le]) => { setM(mg); setDrift(dr); setEv(le); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+      .then(([mg, dr, le]) => { setErr(false); setM(mg); setDrift(dr); setEv(le); setLoading(false); })
+      .catch(() => { setErr(true); setLoading(false); });
+  };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="model validation record" />;
+  if (err) return <ErrorState what="model validation record" onRetry={() => { setLoading(true); load(); }} />;
   if (!m || m.model_version == null) return <p className="muted">No registered model metrics found. Train &amp; score the SAR model first.</p>;
   const pct = (x: any) => `${(num(x) * 100).toFixed(1)}%`;
   const driftColor: Record<string, string> = { stable: "var(--navy)", warning: "#b54708", drift: "var(--critical)" };
@@ -169,8 +176,11 @@ function ModelGovernance() {
 function Screening() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getScreening("", 200).then((r) => { setRows(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  const [err, setErr] = useState(false);
+  const load = () => { setErr(false); getScreening("", 200).then((r) => { setErr(false); setRows(r); setLoading(false); }).catch(() => { setErr(true); setLoading(false); }); };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="screening hits" />;
+  if (err) return <ErrorState what="screening hits" onRetry={() => { setLoading(true); load(); }} />;
   const confirmed = rows.filter((r) => r.confidence === "confirmed").length;
   return (
     <>
@@ -208,10 +218,14 @@ function Pkyc() {
   const [rows, setRows] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    Promise.all([getPkyc(20, 100), getPkycSummary()]).then(([r, s]) => { setRows(r); setSummary(s); setLoading(false); }).catch(() => setLoading(false));
-  }, []);
+  const [err, setErr] = useState(false);
+  const load = () => {
+    setErr(false);
+    Promise.all([getPkyc(20, 100), getPkycSummary()]).then(([r, s]) => { setErr(false); setRows(r); setSummary(s); setLoading(false); }).catch(() => { setErr(true); setLoading(false); });
+  };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="perpetual KYC" />;
+  if (err) return <ErrorState what="perpetual KYC" onRetry={() => { setLoading(true); load(); }} />;
   const band = (b: string) => num((summary?.bands || []).find((x: any) => x.risk_band === b)?.customers);
   const eddTotal = (summary?.bands || []).reduce((s: number, x: any) => s + num(x.edd_required), 0);
   return (
@@ -248,8 +262,11 @@ function Pkyc() {
 function Anomaly() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getAnomalies(100).then((r) => { setRows(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  const [err, setErr] = useState(false);
+  const load = () => { setErr(false); getAnomalies(100).then((r) => { setErr(false); setRows(r); setLoading(false); }).catch(() => { setErr(true); setLoading(false); }); };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="peer anomalies" />;
+  if (err) return <ErrorState what="peer anomalies" onRetry={() => { setLoading(true); load(); }} />;
   return (
     <>
       <div className="panel">

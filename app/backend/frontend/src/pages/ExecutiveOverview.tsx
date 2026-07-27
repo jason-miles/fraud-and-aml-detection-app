@@ -5,7 +5,7 @@ import {
 import {
   getExecKpis, getDailyNew, getOutstanding, getByScenario, getPriorityStatus, getTeamPerformance, execBriefing,
 } from "../api";
-import { Loading, num, LiveControls } from "../components/ui";
+import { Loading, ErrorState, num, LiveControls } from "../components/ui";
 
 const TEAL = "#006341";   // Nedbank signature green for primary series
 const GOLD = "#0a7a53";
@@ -46,6 +46,7 @@ function AlertsOverview() {
   const [scenario, setScenario] = useState<any[]>([]);
   const [ps, setPs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
   const [live, setLive] = useState(true);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [, setTick] = useState(0);
@@ -53,6 +54,7 @@ function AlertsOverview() {
   const refresh = () =>
     Promise.all([getExecKpis(), getDailyNew(), getOutstanding(), getByScenario(), getPriorityStatus()])
       .then(([k, d, o, s, p]) => {
+        setErr(false);
         setKpis(k);
         setDaily(d.map((r: any) => ({ d: r.d, alerts: num(r.alerts) })));
         setOutstanding(o.map((r: any) => ({ due: r.due_date, alerts: num(r.alerts) })));
@@ -60,7 +62,7 @@ function AlertsOverview() {
         setPs(p);
         setUpdatedAt(Date.now());
         setLoading(false);
-      }).catch(() => setLoading(false));
+      }).catch(() => { setErr(true); setLoading(false); });
 
   useEffect(() => { refresh(); }, []);
   useEffect(() => {
@@ -74,6 +76,7 @@ function AlertsOverview() {
   }, []);
 
   if (loading) return <Loading what="executive dashboard" />;
+  if (err && !kpis) return <ErrorState what="executive dashboard" onRetry={() => { setLoading(true); refresh(); }} />;
 
   return (
     <>
@@ -190,8 +193,11 @@ function Heatmap({ data }: { data: any[] }) {
 function TeamPerformance() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getTeamPerformance().then((r) => { setRows(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  const [err, setErr] = useState(false);
+  const load = () => { setErr(false); getTeamPerformance().then((r) => { setRows(r); setLoading(false); }).catch(() => { setErr(true); setLoading(false); }); };
+  useEffect(() => { load(); }, []);
   if (loading) return <Loading what="team performance" />;
+  if (err) return <ErrorState what="team performance" onRetry={() => { setLoading(true); load(); }} />;
   const data = rows.map((r) => ({ team: r.team_name, hours: num(r.avg_hours), cases: num(r.cases), closed: num(r.closed), past_due: num(r.past_due) }));
   return (
     <>

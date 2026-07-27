@@ -212,3 +212,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
 
 /* Route-level lazy-load fallback (code-split pages) */
 .route-loading { padding: 48px 0; text-align: center; color: var(--muted); font-size: 14px; letter-spacing: .04em; }
+
+/* Error / empty states (fetch failure or no-data) — never leave a blank panel */
+.state-msg { display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 40px 0; text-align: center; font-size: 14px; }
+.state-empty { color: var(--muted); }
+.state-err { color: var(--critical); }

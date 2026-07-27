@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import { getGraph } from "../api";
-import { Loading, num } from "../components/ui";
+import { Loading, ErrorState, num } from "../components/ui";
 
 const CHIPS = [
   "high risk customers with offshore connections",
@@ -19,13 +19,15 @@ export function GraphExplorer() {
   const [q, setQ] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const elRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
   const run = (query = "") => {
     setLoading(true);
-    getGraph(query, 12).then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+    setErr(false);
+    getGraph(query, 12).then((d) => { setErr(false); setData(d); setLoading(false); }).catch(() => { setErr(true); setLoading(false); });
   };
   useEffect(() => { run(); }, []);
 
@@ -89,7 +91,8 @@ export function GraphExplorer() {
             <span>Knowledge Graph</span>
             <span className="muted" style={{ fontWeight: 400 }}>{data?.node_count ?? 0} nodes · {data?.edge_count ?? 0} edges · drag / scroll to explore</span>
           </h3>
-          {loading ? <Loading what="graph" /> : (
+          {err ? <ErrorState what="graph" onRetry={() => { setLoading(true); run(q); }} />
+            : loading ? <Loading what="graph" /> : (
             <div ref={elRef} style={{ width: "100%", height: 560, background: "var(--graph-bg)", borderRadius: 10 }} />
           )}
           <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", fontSize: 12 }}>
