@@ -3,7 +3,7 @@
 **Product:** Nedbank Sentinel — CDP & Financial Crime Intelligence Platform
 **Platform:** Databricks Data Intelligence Platform (AWS, `eu-central-1`)
 **Workspace:** `fevm-elexon-app-for-settlement-acc.cloud.databricksapps.com` (id `7474654808133980`)
-**Repo:** https://github.com/jason-miles/fraud-and-aml-detection-app (`main`)
+**Repo:** https://github.com/jason-miles/nedbank-sentinel-app (`main`)
 **Live app:** https://investec-fraud-aml-7474654808133980.aws.databricksapps.com
 **Built:** 2026-07-19 · 31 commits · 3 Isaac Review passes (clean)
 
