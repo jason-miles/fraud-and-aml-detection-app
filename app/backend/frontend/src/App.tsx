@@ -28,6 +28,7 @@ const GraphExplorer = lazy(() => import("./pages/GraphExplorer").then((m) => ({ 
 const AskSentinel = lazy(() => import("./pages/AskSentinel").then((m) => ({ default: m.AskSentinel })));
 const Compliance = lazy(() => import("./pages/Compliance").then((m) => ({ default: m.Compliance })));
 const Reports = lazy(() => import("./pages/Reports").then((m) => ({ default: m.Reports })));
+const Architecture = lazy(() => import("./pages/Architecture").then((m) => ({ default: m.Architecture })));
 
 function TopBar() {
   const { personas, current, setCurrent } = usePersona();
@@ -41,6 +42,7 @@ function TopBar() {
         <NavLink to="/compliance" className={({ isActive }) => (isActive ? "active" : "")}>Compliance</NavLink>
         <NavLink to="/graph" className={({ isActive }) => (isActive ? "active" : "")}>Graph Explorer</NavLink>
         <NavLink to="/reports" className={({ isActive }) => (isActive ? "active" : "")}>Reports</NavLink>
+        <NavLink to="/architecture" className={({ isActive }) => (isActive ? "active" : "")}>Architecture</NavLink>
         <NavLink to="/ask" className={({ isActive }) => (isActive ? "active" : "")}>Ask Sentinel</NavLink>
       </nav>
       <button className="theme-toggle" onClick={toggleTheme}
@@ -78,6 +80,7 @@ function Shell() {
             <Route path="/ask" element={<AskSentinel />} />
             <Route path="/compliance" element={<Compliance />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/architecture" element={<Architecture />} />
           </Routes>
         </Suspense>
       </main>
