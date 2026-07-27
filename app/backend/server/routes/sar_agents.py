@@ -92,7 +92,12 @@ FROM {GOLD_SCHEMA}.sherlock_cases WHERE case_id = :cid
     cust = case.get("customer_id")
     cp = [{"name": "cust", "value": cust}]
 
-    txns = fetch_all(f"""
+    # After the case row, the 4 SQL lookups + the vector-search are all independent.
+    # The Statement Execution API adds ~1.5s fixed overhead per call, so running
+    # them sequentially costs ~8s; fan them out concurrently so the evidence pack
+    # comes back in roughly one round-trip (~2s).
+    def _txns():
+        return fetch_all(f"""
 SELECT t.transaction_id, t.amount, t.direction, t.channel, t.txn_ts, t.counterparty_id
 FROM {SILVER_SCHEMA}.transactions t
 JOIN {SILVER_SCHEMA}.accounts a ON a.account_id = t.account_id
@@ -100,7 +105,8 @@ WHERE a.customer_id = :cust
 ORDER BY t.amount DESC LIMIT 10
 """, cp) if cust else []
 
-    network = fetch_all(f"""
+    def _network():
+        return fetch_all(f"""
 SELECT DISTINCT t.counterparty_id, tp.full_name, tp.country, tp.entity_kind
 FROM {SILVER_SCHEMA}.transactions t
 JOIN {SILVER_SCHEMA}.accounts a ON a.account_id = t.account_id
@@ -109,25 +115,37 @@ WHERE a.customer_id = :cust AND t.counterparty_id IS NOT NULL
 LIMIT 10
 """, cp) if cust else []
 
-    # sanctions / watchlist hits for this subject (by name)
-    screening = fetch_all(f"""
+    def _screening():
+        # sanctions / watchlist hits for this subject (by name)
+        return fetch_all(f"""
 SELECT watch_name, list_type, list_source, severity, confidence, match_score
 FROM {GOLD_SCHEMA}.sanctions_screening_hits
 WHERE entity_name = :name
 ORDER BY match_score DESC LIMIT 10
 """, [{"name": "name", "value": case.get("customer_name")}])
 
-    pkyc = _one(f"""
+    def _pkyc():
+        return _one(f"""
 SELECT dynamic_risk, risk_band, edd_review_required, risk_drivers,
        alert_count, severe_alerts, sanction_hits, media_hits
 FROM {GOLD_SCHEMA}.pkyc_customer_risk WHERE customer_id = :cust
 """, cp) if cust else None
 
     # RAG: retrieve adverse-media evidence relevant to the subject + typology.
-    media = retrieve_adverse_media(f"{case.get('customer_name')} {case.get('scenario')}", k=3)
+    def _media():
+        return retrieve_adverse_media(f"{case.get('customer_name')} {case.get('scenario')}", k=3)
 
-    return {"case": case, "transactions": txns, "network": network,
-            "screening": screening, "pkyc": pkyc, "adverse_media": media}
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        f_txns = pool.submit(_txns)
+        f_network = pool.submit(_network)
+        f_screening = pool.submit(_screening)
+        f_pkyc = pool.submit(_pkyc)
+        f_media = pool.submit(_media)
+
+    return {"case": case, "transactions": f_txns.result(), "network": f_network.result(),
+            "screening": f_screening.result(), "pkyc": f_pkyc.result(),
+            "adverse_media": f_media.result()}
 
 
 def _evidence_brief(ev: dict) -> str:
