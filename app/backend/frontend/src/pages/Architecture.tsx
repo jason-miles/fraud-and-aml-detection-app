@@ -244,6 +244,12 @@ function PlatformArch({ cloud }: { cloud: "aws" | "azure" }) {
         <Node x={858} y={390} w={248} title="BI Tools" sub={c.bi} icon={<IconChart c={acc} />} tone="brand" />
       </div>
 
+      <div className="plegend" aria-hidden>
+        <span><i style={{ background: "#8a5cf6" }} />Ingest</span>
+        <span><i style={{ background: "#12b76a" }} />ETL &amp; serving</span>
+        <span><i className="dot" style={{ background: "#f79009" }} />Inference feedback</span>
+      </div>
+
       <div className="arch-bands">
         <div className="arch-band"><b>Open Delta Lake</b><span>ACID · time travel · unified batch + streaming</span></div>
         <div className="arch-band"><b>Unity Catalog governance</b><span>Lineage · access control · audit</span></div>

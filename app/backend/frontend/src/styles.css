@@ -285,3 +285,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--n
 @media (max-width: 1180px) {
   .pdiagram { overflow-x: auto; } /* canvas keeps its 1120px; scroll horizontally on small screens */
 }
+
+/* Platform diagram arrow legend */
+.plegend { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 0 0 16px; }
+.plegend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.plegend i { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
+.plegend i.dot { background-image: none; height: 3px;
+  -webkit-mask: repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 8px);
+  mask: repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 8px); }
