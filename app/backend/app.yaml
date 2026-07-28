@@ -14,7 +14,7 @@ env:
   - name: FRAUD_SILVER_SCHEMA
     value: "investec_fraud_aml_silver"
   - name: FRAUD_WAREHOUSE_ID
-    value: "d0305022e6c3db8e"
+    value: "eeee8ab1661ce350"
   - name: SENTINEL_GENIE_SPACE
     value: "01f183691e8f14f18ae80b78b6ffae8b"
   - name: SENTINEL_DASHBOARD_ID
