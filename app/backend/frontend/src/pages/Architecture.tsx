@@ -1,7 +1,7 @@
 // Reference Architecture — brand-native recreations of the Databricks solution
 // architecture (fraud/AML) + the medallion Lakehouse platform (AWS/Azure). All
 // colour comes from CSS vars so this file renders in each app's own palette.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 type Item = { label: string; sub?: string };
 
@@ -135,71 +135,113 @@ function SolutionArch() {
 }
 
 // ── Platform Architecture — the classic Databricks medallion Lakehouse, per cloud.
+// Rendered as a real SVG diagram: dashed group boxes, node icons, and coloured
+// data-flow arrows (purple = ingest, green = ETL/serving, orange = inference).
 const CLOUD: Record<string, {
-  name: string; ingest: string; storage: string; serving: string; bi: string[];
+  name: string; ingest: string; storage: string; serving: string; bi: string;
 }> = {
   aws: { name: "AWS", ingest: "Amazon Kinesis", storage: "Amazon S3",
-    serving: "MLflow Model Serving / AWS ECS", bi: ["Tableau", "Databricks SQL", "Looker"] },
+    serving: "MLflow Serving / AWS ECS", bi: "Tableau · Databricks SQL · Looker" },
   azure: { name: "Azure", ingest: "Azure Event Hubs", storage: "ADLS Gen2",
-    serving: "MLflow / Azure ML", bi: ["Tableau", "Redash", "Power BI"] },
+    serving: "MLflow / Azure ML", bi: "Tableau · Redash · Power BI" },
 };
+
+// ---- small inline icons (stroke uses currentColor so they inherit brand accent) ----
+const IconDelta = ({ c = "#00add4" }: { c?: string }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden><path d="M12 3 L21 20 H3 Z" fill="none" stroke={c} strokeWidth="1.8" strokeLinejoin="round" /><path d="M12 9 L16.5 18 H7.5 Z" fill={c} opacity="0.85" /></svg>
+);
+const IconStack = ({ c = "currentColor" }: { c?: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden><g fill={c}><path d="M12 3 4 7l8 4 8-4z" opacity="0.9" /><path d="M4 12l8 4 8-4" fill="none" stroke={c} strokeWidth="1.6" /><path d="M4 16.5l8 4 8-4" fill="none" stroke={c} strokeWidth="1.6" /></g></svg>
+);
+const IconFlow = ({ c = "currentColor" }: { c?: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden><g fill="none" stroke={c} strokeWidth="1.7"><circle cx="6" cy="6" r="2.4" /><circle cx="18" cy="12" r="2.4" /><circle cx="6" cy="18" r="2.4" /><path d="M8.4 6H14a3 3 0 0 1 3 3v.6M8 17.4l7-4.2" /></g></svg>
+);
+const IconDb = ({ c = "currentColor" }: { c?: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden><g fill="none" stroke={c} strokeWidth="1.6"><ellipse cx="12" cy="5.5" rx="7" ry="2.6" /><path d="M5 5.5v13c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-13" /><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" /></g></svg>
+);
+const IconChart = ({ c = "currentColor" }: { c?: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden><g fill={c}><rect x="4" y="12" width="3.4" height="8" rx="1" /><rect x="10.3" y="7" width="3.4" height="13" rx="1" opacity="0.8" /><rect x="16.6" y="4" width="3.4" height="16" rx="1" opacity="0.6" /></g></svg>
+);
+
+// One diagram node: icon tile + label, absolutely positioned inside the SVG canvas.
+function Node({ x, y, w = 150, h = 54, title, sub, icon, tone = "plain" }:
+  { x: number; y: number; w?: number; h?: number; title: string; sub?: string; icon: ReactNode; tone?: string }) {
+  return (
+    <div className={`pnode pnode-${tone}`} style={{ left: x, top: y, width: w, minHeight: h }}>
+      <span className="pnode-ico">{icon}</span>
+      <span className="pnode-txt"><b>{title}</b>{sub && <em>{sub}</em>}</span>
+    </div>
+  );
+}
 
 function PlatformArch({ cloud }: { cloud: "aws" | "azure" }) {
   const c = CLOUD[cloud];
+  const acc = "var(--accent)";
+  // canvas coordinate system (scales responsively via viewBox + CSS)
   return (
     <>
       <p className="arch-cloud-title">Databricks + {c.name} — Lakehouse Platform</p>
-      <div className="arch-flow">
-        <Stage title="Data Sources" groups={[
-          { heading: "Batch Data", items: [
-            { label: "Line of Business" }, { label: "CRM" }, { label: "On-Premises Databases" }] },
-          { heading: "Streaming Data", items: [
-            { label: "POS Data" }, { label: "IoT" }, { label: "Telemetry" }, { label: "Social Data" }] },
-        ]} />
 
-        <div className="arch-arrow" aria-hidden>→</div>
+      <div className="pdiagram" role="img"
+        aria-label={`Databricks on ${c.name} medallion Lakehouse: batch and streaming sources ingest into Bronze, Silver and Gold Delta Lake tables, feeding Databricks Machine Learning and Databricks SQL.`}>
+        {/* connector layer */}
+        <svg className="pdiagram-svg" viewBox="0 0 1120 520" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id={`ar-g-${cloud}`} markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#12b76a" /></marker>
+            <marker id={`ar-p-${cloud}`} markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#8a5cf6" /></marker>
+            <marker id={`ar-o-${cloud}`} markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#f79009" /></marker>
+          </defs>
+          {/* dashed group boxes */}
+          <rect className="pgroup" x="286" y="12" width="520" height="196" rx="8" />
+          <text className="pgroup-t" x="300" y="34">Databricks Machine Learning</text>
+          <rect className="pgroup" x="286" y="228" width="520" height="220" rx="8" />
+          <text className="pgroup-t" x="300" y="250">Databricks Data Engineering</text>
+          <rect className="pgroup" x="846" y="228" width="268" height="220" rx="8" />
+          <text className="pgroup-t" x="860" y="250">Databricks SQL</text>
 
-        <Stage title="Ingest" groups={[
-          { items: [
-            { label: "Databricks & Partners", sub: "Batch load" },
-            { label: c.ingest, sub: "Streaming ingest" }] },
-        ]} />
+          {/* purple: batch + streaming sources -> ingest -> bronze */}
+          <path className="pf" stroke="#8a5cf6" markerEnd={`url(#ar-p-${cloud})`} d="M154 98 H160 V314 H168" />
+          <path className="pf" stroke="#8a5cf6" markerEnd={`url(#ar-p-${cloud})`} d="M154 290 H160 V314 H168" />
+          <path className="pf" stroke="#8a5cf6" markerEnd={`url(#ar-p-${cloud})`} d="M278 314 H290 V342 H300" />
+          {/* green ETL: bronze -> silver -> gold */}
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M450 342 H490" />
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M640 342 H650" />
+          {/* green feedback: silver -> notebooks (up the bronze/silver gap channel x=470) */}
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M490 330 H470 V112 H450" />
+          {/* green ML chain: notebooks -> tracker -> registry */}
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M450 112 H490" />
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M640 112 H650" />
+          {/* orange dotted: registry -> serving -> back to gold (inference) */}
+          <path className="pf pf-dot" stroke="#f79009" markerEnd={`url(#ar-o-${cloud})`} d="M800 112 H812" />
+          <path className="pf pf-dot" stroke="#f79009" markerEnd={`url(#ar-o-${cloud})`} d="M840 206 V342 H800" />
+          {/* green: gold -> Databricks SQL (through the DE/SQL gap channel x=826) */}
+          <path className="pf" stroke="#12b76a" markerEnd={`url(#ar-g-${cloud})`} d="M800 342 H826 V298 H858" />
+        </svg>
 
-        <div className="arch-arrow" aria-hidden>→</div>
+        {/* section labels (left) */}
+        <div className="plabel" style={{ left: 6, top: 78 }}>Batch Data</div>
+        <div className="plabel" style={{ left: 6, top: 270 }}>Streaming Data</div>
 
-        <div className="arch-stage arch-medallion">
-          <h3 className="arch-stage-title">Data Engineering — Medallion</h3>
-          <div className="arch-group">
-            <div className="arch-card arch-bronze"><span className="arch-card-dot" aria-hidden /><div>
-              <div className="arch-card-label">Raw Data (Bronze)</div><div className="arch-card-sub">Delta Lake · {c.storage}</div></div></div>
-            <div className="arch-medallion-etl">↓ Spark ETL</div>
-            <div className="arch-card arch-silver"><span className="arch-card-dot" aria-hidden /><div>
-              <div className="arch-card-label">Refined Data (Silver)</div><div className="arch-card-sub">Delta Lake · cleansed / conformed</div></div></div>
-            <div className="arch-medallion-etl">↓ Spark ETL</div>
-            <div className="arch-card arch-gold"><span className="arch-card-dot" aria-hidden /><div>
-              <div className="arch-card-label">Enriched Data (Gold)</div><div className="arch-card-sub">Delta Lake · business-level</div></div></div>
-          </div>
-        </div>
+        {/* sources + ingest */}
+        <Node x={24} y={70} w={130} title="Structured" sub="LoB · CRM · On-prem DB" icon={<IconDb c={acc} />} />
+        <Node x={24} y={262} w={130} title="Streaming" sub="POS · IoT · Telemetry" icon={<IconFlow c={acc} />} />
+        <Node x={168} y={286} w={110} title="Ingest" sub={c.ingest} icon={<IconFlow c="#8a5cf6" />} tone="ingest" />
 
-        <div className="arch-arrow" aria-hidden>→</div>
+        {/* ML row (inside ML box 286–806) */}
+        <Node x={300} y={84} w={150} title="Notebooks" sub="ML Runtime" icon={<IconStack c={acc} />} tone="brand" />
+        <Node x={490} y={84} w={150} title="MLflow" sub="Tracking" icon={<IconFlow c={acc} />} tone="brand" />
+        <Node x={650} y={84} w={150} title="MLflow" sub="Registry" icon={<IconFlow c={acc} />} tone="brand" />
+        <Node x={812} y={150} w={120} title="Serving" sub={c.serving} icon={<IconStack c="#f79009" />} tone="serve" />
 
-        <Stage title="Databricks ML" groups={[
-          { items: [
-            { label: "Notebooks & ML Runtime" },
-            { label: "MLflow Tracking" },
-            { label: "MLflow Registry" },
-            { label: c.serving, sub: "API / batch / real-time inference" }] },
-        ]} />
+        {/* medallion row (inside DE box 286–806) */}
+        <Node x={300} y={314} w={150} title="Raw · Bronze" sub={`Delta · ${c.storage}`} icon={<IconDelta />} tone="bronze" />
+        <Node x={490} y={314} w={150} title="Refined · Silver" sub="Delta · conformed" icon={<IconDelta />} tone="silver" />
+        <Node x={650} y={314} w={150} title="Enriched · Gold" sub="Delta · business" icon={<IconDelta />} tone="gold" />
 
-        <div className="arch-arrow" aria-hidden>→</div>
-
-        <Stage title="Databricks SQL" groups={[
-          { items: [
-            { label: "BI/SQL Client Connectors" }, { label: "Data Catalog" },
-            { label: "Dashboards & Alerts" }, { label: "Integrated Security" },
-            { label: "SQL Editor & Query Catalog" },
-            { label: `BI: ${c.bi.join(" · ")}`, sub: "Downstream analytics" }] },
-        ]} />
+        {/* SQL box contents (846–1114) */}
+        <Node x={858} y={270} w={248} title="BI/SQL Connectors" sub="Data Catalog · Security" icon={<IconChart c={acc} />} tone="brand" />
+        <Node x={858} y={330} w={248} title="Dashboards & Alerts" sub="SQL Editor & Query Catalog" icon={<IconChart c={acc} />} tone="brand" />
+        <Node x={858} y={390} w={248} title="BI Tools" sub={c.bi} icon={<IconChart c={acc} />} tone="brand" />
       </div>
 
       <div className="arch-bands">
